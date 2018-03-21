@@ -1,6 +1,7 @@
-﻿using System.Threading.Tasks;
-using Common.Log;
+﻿using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Services;
+using Lykke.Service.BitfinexAdapter.Services.Exchange;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter.Services
 {
@@ -14,16 +15,18 @@ namespace Lykke.Service.BitfinexAdapter.Services
     public class StartupManager : IStartupManager
     {
         private readonly ILog _log;
+        private readonly ExchangeBase _exchange;
 
-        public StartupManager(ILog log)
+        public StartupManager(ILog log, ExchangeBase exchange)
         {
             _log = log;
+            _exchange = exchange;
         }
 
         public async Task StartAsync()
         {
-            // TODO: Implement your startup logic here. Good idea is to log every step
-
+            _exchange.Start();
+            await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), $"{_exchange.Name} initialized.");
             await Task.CompletedTask;
         }
     }

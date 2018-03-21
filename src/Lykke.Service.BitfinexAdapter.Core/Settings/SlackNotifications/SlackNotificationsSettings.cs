@@ -1,4 +1,4 @@
-﻿namespace Lykke.Service.BitfinexAdapter.Settings.SlackNotifications
+﻿namespace Lykke.Service.BitfinexAdapter.Core.Settings.SlackNotifications
 {
     public class SlackNotificationsSettings
     {
