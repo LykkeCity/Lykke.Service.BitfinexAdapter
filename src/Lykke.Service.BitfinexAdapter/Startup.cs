@@ -171,7 +171,7 @@ namespace Lykke.Service.BitfinexAdapter
 
             aggregateLogger.AddLog(consoleLogger);
 
-            var dbLogConnectionStringManager = settings.Nested(x => x.Db.LogsConnString);
+            var dbLogConnectionStringManager = settings.Nested(x => x.BitfinexAdapterService.Db.LogsConnString);
             var dbLogConnectionString = dbLogConnectionStringManager.CurrentValue;
 
             if (string.IsNullOrEmpty(dbLogConnectionString))

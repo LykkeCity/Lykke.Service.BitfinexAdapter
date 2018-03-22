@@ -1,11 +1,15 @@
-﻿using Lykke.SettingsReader.Attributes;
+﻿using Lykke.Service.BitfinexAdapter.Core.Settings.ServiceSettings;
+using Lykke.SettingsReader.Attributes;
 using System.Collections.Generic;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Domain.Settings
 {
     public sealed class BitfinexAdapterSettings 
     {
-       
+        public DbSettings Db { get; set; }
+        public RabbitMqConfiguration RabbitMq { get; set; }
+
+
         public BitfinexAdapterSettings()
         {
             UseSupportedCurrencySymbolsAsFilter = true;

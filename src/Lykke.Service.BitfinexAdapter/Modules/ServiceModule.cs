@@ -2,7 +2,6 @@
 using Autofac.Extensions.DependencyInjection;
 using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
-using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Handlers;
 using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Core.Settings;
@@ -62,19 +61,19 @@ namespace Lykke.Service.BitfinexAdapter.Modules
 
             builder.RegisterType<BitfinexModelConverter>().SingleInstance();
 
-            builder.RegisterInstance(_settings.CurrentValue.BitfinexAdapterSettings);
+            builder.RegisterInstance(_settings.CurrentValue.BitfinexAdapterService);
 
             builder.RegisterType<BitfinexExchange>().As<ExchangeBase>().SingleInstance();
 
-            RegisterRabbitMqHandler<TickPrice>(builder, _settings.CurrentValue.RabbitMq.TickPrices, "tickHandler");
-            RegisterRabbitMqHandler<ExecutionReport>(builder, _settings.CurrentValue.RabbitMq.Trades);
-            RegisterRabbitMqHandler<OrderBook>(builder, _settings.CurrentValue.RabbitMq.OrderBooks, "orderBookHandler");
+            //RegisterRabbitMqHandler<TickPrice>(builder, _settings.CurrentValue.BitfinexAdapterService.RabbitMq.TickPrices, "tickHandler");
+            //RegisterRabbitMqHandler<ExecutionReport>(builder, _settings.CurrentValue.BitfinexAdapterService.RabbitMq.Trades);
+            RegisterRabbitMqHandler<OrderBook>(builder, _settings.CurrentValue.BitfinexAdapterService.RabbitMq.OrderBooks, "orderBookHandler");
 
-            builder.RegisterType<TickPriceHandlerDecorator>()
-                .WithParameter((info, context) => info.Name == "rabbitMqHandler",
-                    (info, context) => context.ResolveNamed<IHandler<TickPrice>>("tickHandler"))
-                .SingleInstance()
-                .As<IHandler<TickPrice>>();
+            //builder.RegisterType<TickPriceHandlerDecorator>()
+            //    .WithParameter((info, context) => info.Name == "rabbitMqHandler",
+            //        (info, context) => context.ResolveNamed<IHandler<TickPrice>>("tickHandler"))
+            //    .SingleInstance()
+            //    .As<IHandler<TickPrice>>();
 
             builder.Populate(_services);
         }
