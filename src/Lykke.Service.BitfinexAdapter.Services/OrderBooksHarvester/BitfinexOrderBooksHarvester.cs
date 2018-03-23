@@ -21,23 +21,24 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
     {
         private readonly BitfinexAdapterSettings _configuration;
         private readonly Dictionary<long, Channel> _channels;
-        //private readonly IHandler<TickPrice> _tickPriceHandler;
+        private readonly IHandler<TickPrice> _tickPriceHandler;
         private readonly IBitfinexApi _exchangeApi;
 
         public BitfinexOrderBooksHarvester(BitfinexAdapterSettings configuration,
             IHandler<OrderBook> orderBookHandler,
-            //IHandler<TickPrice> tickPriceHandler,
+            IHandler<TickPrice> tickPriceHandler,
             ILog log)
         : base(Constants.BitfinexExchangeName, configuration, new WebSocketTextMessenger(configuration.WebSocketEndpointUrl, log), log, orderBookHandler)
         {
             _configuration = configuration;
             _channels = new Dictionary<long, Channel>();
-            //_tickPriceHandler = tickPriceHandler;
-            var credenitals = new BitfinexServiceClientCredentials(configuration.ApiKey, configuration.ApiSecret);
+            _tickPriceHandler = tickPriceHandler;
+            var credenitals = new BitfinexServiceClientCredentials(String.Empty, String.Empty); // bitfinex does not require key/scret for public events
             _exchangeApi = new BitfinexApi(credenitals)
             {
                 BaseUri = new Uri(configuration.EndpointUrl)
             };
+            this.MaxOrderBookRate = configuration.MaxOrderBookRate;
         }
 
 
@@ -204,8 +205,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 
         private Task CallTickPricesHandlers(TickPrice tickPrice)
         {
-            //return _tickPriceHandler.Handle(tickPrice);
-            return Task.CompletedTask;
+            return _tickPriceHandler.Handle(tickPrice);
         }
 
         private sealed class Channel

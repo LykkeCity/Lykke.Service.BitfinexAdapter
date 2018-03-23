@@ -8,7 +8,6 @@ using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using Lykke.Service.BitfinexAdapter.Core.RestClient;
 using Lykke.Service.BitfinexAdapter.Core.Utils;
 using Lykke.Service.BitfinexAdapter.Models;
-using Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,29 +21,21 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
     public class BitfinexExchange : ExchangeBase
     {
         private readonly BitfinexModelConverter _modelConverter;
-        private readonly BitfinexOrderBooksHarvester _orderBooksHarvester;
-        //private readonly BitfinexExecutionHarvester _executionHarvester;
         private readonly IBitfinexApi _exchangeApi;
 
-        public BitfinexExchange(BitfinexAdapterSettings configuration,
-            //TranslatedSignalsRepository translatedSignalsRepository,
-            BitfinexOrderBooksHarvester orderBooksHarvester,
-            //BitfinexExecutionHarvester executionHarvester, 
+        public BitfinexExchange(
+            BitfinexAdapterSettings configuration,
+            string apiKey,
+            string secret,
             ILog log)
             : base(Constants.BitfinexExchangeName, configuration, log)
         {
             _modelConverter = new BitfinexModelConverter(configuration);
-            _orderBooksHarvester = orderBooksHarvester;
-            //_executionHarvester = executionHarvester;
-            var credenitals = new BitfinexServiceClientCredentials(configuration.ApiKey, configuration.ApiSecret);
+            var credenitals = new BitfinexServiceClientCredentials(apiKey, secret); //TODO: key/secret must come from config, after verifying client request X-API-KEY. We may need to create separe BitfinexExchange/BitfinexApi for each client. _orderBooksHarvester may need to be taken out from here and started separately.
             _exchangeApi = new BitfinexApi(credenitals)
             {
                 BaseUri = new Uri(configuration.EndpointUrl)
             };
-
-
-
-            orderBooksHarvester.MaxOrderBookRate = configuration.MaxOrderBookRate;
         }
 
         public override async Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout)
@@ -127,6 +118,16 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
         }
 
         public override StreamingSupport StreamingSupport => new StreamingSupport(true, true);
+        public override async Task<IReadOnlyList<string>> GetAllExchangeInstruments()
+        {
+            var response = await _exchangeApi.GetAllSymbols();
+            if (response is Error error)
+            {
+                throw new ApiException(error.Message);
+            }
+            var instrumentsFromExchange = ((IReadOnlyList<string>)response).Select(i => i.ToUpper()).ToList();
+            return instrumentsFromExchange;
+        }
 
         private IReadOnlyCollection<TradingPosition> ExchangePositionsToPositionModel(IEnumerable<Position> response, IReadOnlyList<MarginInfo> marginInfo)
         {
@@ -208,15 +209,12 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         protected override void StartImpl()
         {
-            //_executionHarvester.Start();
-            _orderBooksHarvester.Start();
-            OnConnected();
+            OnConnected(); //TODO: we may no longer need to "start" the exchange or anything from it. Its just used as a service exposing bitfinex API 
         }
 
         protected override void StopImpl()
         {
-            //_executionHarvester.Stop();
-            _orderBooksHarvester.Stop();
+
         }
 
 

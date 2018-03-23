@@ -19,14 +19,23 @@ namespace Lykke.Service.BitfinexAdapter.Core.WebSocketClient
         private readonly ILog _log;
         private readonly TimeSpan _pingPeriod = TimeSpan.FromSeconds(5);
         private readonly Timer _pingTimer;
+        private string _apiKey;
+        private string _apiSecret;
 
 
-        public BitfinexWebSocketSubscriber(BitfinexAdapterSettings configuration, bool authenticate, ILog log, TimeSpan? heartbeatPeriod = null) : base(new WebSocketTextMessenger(configuration.WebSocketEndpointUrl, log), log, heartbeatPeriod)
+        public BitfinexWebSocketSubscriber(BitfinexAdapterSettings configuration, 
+            bool authenticate, 
+            ILog log, 
+            string ApiKey,
+            string ApiSecret,
+            TimeSpan? heartbeatPeriod = null) : base(new WebSocketTextMessenger(configuration.WebSocketEndpointUrl, log), log, heartbeatPeriod)
         {
             _configuration = configuration;
             _authenticate = authenticate;
             _log = log;
             _pingTimer = new Timer(SendPing);
+            _apiKey = ApiKey;
+            _apiSecret = ApiSecret;
         }
 
         public Task Subscribe(Func<dynamic, Task> handlerFunc)
@@ -34,12 +43,13 @@ namespace Lykke.Service.BitfinexAdapter.Core.WebSocketClient
             _handlers.Add(handlerFunc);
             return Task.CompletedTask;
         }
-
-        protected override async Task Connect(CancellationToken token)
+        
+        //Authenticated web sockets client is used for order/trade execution harvesting (event) for clients
+        protected override async Task Connect(CancellationToken token) 
         {
             if (_authenticate)
             {
-                if (string.IsNullOrEmpty(_configuration.ApiKey) || string.IsNullOrEmpty(_configuration.ApiSecret))
+                if (string.IsNullOrEmpty(_apiKey) || string.IsNullOrEmpty(_apiSecret))
                 {
                     const string error = "ApiKey and ApiSecret must be specified to authenticate the Bitfinex web socket subscription.";
                     await Log.WriteFatalErrorAsync(nameof(Connect), nameof(Connect), new AuthenticationException(error));
@@ -80,7 +90,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.WebSocketClient
 
         private Task Authenticate(CancellationToken token)
         {
-            var request = AuthintificateRequest.BuildRequest(_configuration.ApiKey, _configuration.ApiSecret);
+            var request = AuthintificateRequest.BuildRequest(_apiKey, _apiSecret);
             return Messenger.SendRequestAsync(request, token);
         }
 

@@ -1,7 +1,10 @@
-﻿using Common;
+﻿using Autofac;
+using Common;
 using Common.Log;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Services;
-using Lykke.Service.BitfinexAdapter.Services.Exchange;
+using Lykke.Service.BitfinexAdapter.Services.ExecutionHarvester;
+using Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -16,12 +19,16 @@ namespace Lykke.Service.BitfinexAdapter.Services
     {
         private readonly ILog _log;
         private readonly List<IStopable> _items = new List<IStopable>();
-        private readonly ExchangeBase _exchange;
+        private readonly BitfinexOrderBooksHarvester _orderBooksHarvester;
+        private BitfinexAdapterSettings _settings;
+        private IComponentContext _container;
 
-        public ShutdownManager(ILog log, ExchangeBase exchange)
+        public ShutdownManager(ILog log, BitfinexOrderBooksHarvester orderBooksHarvester, BitfinexAdapterSettings settings, IComponentContext container)
         {
             _log = log;
-            _exchange = exchange;
+            _orderBooksHarvester = orderBooksHarvester;
+            _settings = settings;
+            _container = container;
         }
 
         public void Register(IStopable stopable)
@@ -37,8 +44,18 @@ namespace Lykke.Service.BitfinexAdapter.Services
                 item.Stop();
             }
 
-            _exchange.Stop();
-            await _log.WriteInfoAsync(nameof(ShutdownManager), nameof(StopAsync), $"{_exchange.Name} stopped.");
+            _orderBooksHarvester.Stop();
+            await _log.WriteInfoAsync(nameof(ShutdownManager), nameof(StopAsync), $"{nameof(BitfinexOrderBooksHarvester)} stopped.");
+
+            foreach (var clientApiKeyCredentials in _settings.Credentials)
+            {
+                var executionHarvester = _container.IsRegisteredWithName<BitfinexExecutionHarvester>(clientApiKeyCredentials.Key) ? _container.ResolveNamed<BitfinexExecutionHarvester>(clientApiKeyCredentials.Key) : null;
+                if (executionHarvester != null)
+                {
+                    executionHarvester.Stop();
+                    await _log.WriteInfoAsync(nameof(StartupManager), nameof(StopAsync), $"{nameof(BitfinexExecutionHarvester)} stopped for client api key {clientApiKeyCredentials.Key}");
+                }
+            }
 
             await Task.CompletedTask;
         }

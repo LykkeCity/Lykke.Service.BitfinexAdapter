@@ -104,5 +104,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
         }
 
         public abstract StreamingSupport StreamingSupport { get; }
+        public abstract Task<IReadOnlyList<string>> GetAllExchangeInstruments();
+
     }
 }
