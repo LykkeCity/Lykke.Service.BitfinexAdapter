@@ -30,5 +30,9 @@ namespace Lykke.Service.BitfinexAdapter.Core.Services
         Task<IReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout);
 
         StreamingSupport StreamingSupport { get; }
+
+        Task<IReadOnlyList<string>> GetAllExchangeInstruments();
+
+
     }
 }

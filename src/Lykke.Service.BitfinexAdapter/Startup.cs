@@ -5,6 +5,7 @@ using Common.Log;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
+using Lykke.Service.BitfinexAdapter.Authentication;
 using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Core.Settings;
 using Lykke.Service.BitfinexAdapter.Modules;
@@ -56,6 +57,8 @@ namespace Lykke.Service.BitfinexAdapter
                 var appSettings = Configuration.LoadSettings<AppSettings>();
 
                 Log = CreateLogWithSlack(services, appSettings);
+
+                ApiKeyAuthAttribute.ClientApiKeys = appSettings.CurrentValue.BitfinexAdapterService.Credentials;
 
                 builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x), Log));
                 builder.Populate(services);
