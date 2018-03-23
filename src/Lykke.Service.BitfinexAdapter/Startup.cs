@@ -51,6 +51,7 @@ namespace Lykke.Service.BitfinexAdapter
                 services.AddSwaggerGen(options =>
                 {
                     options.DefaultLykkeConfiguration("v1", "BitfinexAdapter API");
+                    options.OperationFilter<SwaggerXApiHeader>();
                 });
 
                 var builder = new ContainerBuilder();
