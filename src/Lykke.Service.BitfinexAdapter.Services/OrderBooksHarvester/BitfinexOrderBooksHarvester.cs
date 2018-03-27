@@ -8,6 +8,7 @@ using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient;
 using Lykke.Service.BitfinexAdapter.Core.Handlers;
 using Lykke.Service.BitfinexAdapter.Core.RestClient;
+using Lykke.Service.BitfinexAdapter.Core.Throttling;
 using Lykke.Service.BitfinexAdapter.Core.Utils;
 using Lykke.Service.BitfinexAdapter.Core.WebSocketClient;
 using System;
@@ -22,13 +23,16 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
         private readonly BitfinexAdapterSettings _configuration;
         private readonly Dictionary<long, Channel> _channels;
         private readonly IHandler<TickPrice> _tickPriceHandler;
+        private readonly IThrottling _tickPriceThrottler;
         private readonly IBitfinexApi _exchangeApi;
 
         public BitfinexOrderBooksHarvester(BitfinexAdapterSettings configuration,
             IHandler<OrderBook> orderBookHandler,
             IHandler<TickPrice> tickPriceHandler,
+            IThrottling orderBooksThrottler,
+            IThrottling tickPriceThrottler,
             ILog log)
-        : base(Constants.BitfinexExchangeName, configuration, new WebSocketTextMessenger(configuration.WebSocketEndpointUrl, log), log, orderBookHandler)
+        : base(configuration, new WebSocketTextMessenger(configuration.WebSocketEndpointUrl, log), log, orderBookHandler, orderBooksThrottler)
         {
             _configuration = configuration;
             _channels = new Dictionary<long, Channel>();
@@ -38,7 +42,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             {
                 BaseUri = new Uri(configuration.EndpointUrl)
             };
-            this.MaxOrderBookRate = configuration.MaxOrderBookRate;
+            _tickPriceThrottler = tickPriceThrottler;
         }
 
 
@@ -110,8 +114,14 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
                 await Log.WriteWarningAsync(nameof(Subscribe), "Subscribing for orderbooks", "Instruments list is empty - its either not set in config and UseSupportedCurrencySymbolsAsFilter is set to true or exchange returned empty symbols list. No symbols to subscribe for.");
             }
 
-            await SubscribeToOrderBookAsync(instrumentsToSubscribeFor);
-            await SubscribeToTickerAsync(instrumentsToSubscribeFor);
+            if (_configuration.RabbitMq.OrderBooks.Enabled)
+            {
+                await SubscribeToOrderBookAsync(instrumentsToSubscribeFor);
+            }
+            if (_configuration.RabbitMq.TickPrices.Enabled)
+            {
+                await SubscribeToTickerAsync(instrumentsToSubscribeFor);
+            }
         }
 
         private async Task SubscribeToOrderBookAsync(IEnumerable<string> instruments)
@@ -180,7 +190,12 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
         {
             var pair = _channels[ticker.ChannelId].Pair;
 
-            var tickPrice = new TickPrice(new Instrument(ExchangeName, pair), DateTime.UtcNow,
+            if (_tickPriceThrottler.NeedThrottle(pair))
+            {
+                return;
+            }
+
+            var tickPrice = new TickPrice(new Instrument(Constants.BitfinexExchangeName, pair), DateTime.UtcNow, 
                 ticker.Ask, ticker.Bid);
             await CallTickPricesHandlers(tickPrice);
         }

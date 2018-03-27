@@ -7,6 +7,7 @@ using Lykke.Service.BitfinexAdapter.Core.Handlers;
 using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Core.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Settings.ServiceSettings;
+using Lykke.Service.BitfinexAdapter.Core.Throttling;
 using Lykke.Service.BitfinexAdapter.Core.Utils;
 using Lykke.Service.BitfinexAdapter.Core.WebSocketClient;
 using Lykke.Service.BitfinexAdapter.Services;
@@ -75,6 +76,10 @@ namespace Lykke.Service.BitfinexAdapter.Modules
                     (info, context) => context.ResolveNamed<IHandler<TickPrice>>("tickHandler"))
                 .SingleInstance()
                 .As<IHandler<TickPrice>>();
+
+            builder.RegisterType<EventsPerSecondPerInstrumentThrottlingManager>()
+                .WithParameter("maxEventPerSecondByInstrument", _settings.CurrentValue.BitfinexAdapterService.MaxEventPerSecondByInstrument)
+                .As<IThrottling>().InstancePerDependency();
 
 
             RegisterExecutionHarvesterForEachClient(builder);

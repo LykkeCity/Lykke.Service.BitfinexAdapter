@@ -29,7 +29,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Settings
 
         public string WebSocketEndpointUrl { get; set; }
 
-        public int MaxOrderBookRate { get; set; }
+        public int MaxEventPerSecondByInstrument { get; set; }
 
         public IReadOnlyCollection<CurrencySymbol> SupportedCurrencySymbols { get; set; }
     }
