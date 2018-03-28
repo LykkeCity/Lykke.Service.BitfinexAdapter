@@ -15,9 +15,9 @@ namespace Lykke.Service.BitfinexAdapter.Core.Services
 
         IReadOnlyList<Instrument> Instruments { get; }
 
-        Task<IEnumerable<AccountBalance>> GetAccountBalance(TimeSpan timeout);
+        Task<IReadOnlyCollection<MarginBalanceDomain>> GetMarginBalances(TimeSpan timeout);
 
-        Task<IReadOnlyCollection<TradingBalance>> GetTradeBalances(TimeSpan timeout);
+        Task<IReadOnlyCollection<WalletBalance>> GetWalletBalances(TimeSpan timeout);
 
         Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout);
 

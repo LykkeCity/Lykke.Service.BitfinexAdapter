@@ -8,6 +8,9 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.RestClient
         [JsonProperty("margin_balance")]
         public decimal MarginBalance { get; set; }
 
+        [JsonProperty("tradable_balance")]
+        public decimal TradableBalance { get; set; }
+
         [JsonProperty("unrealized_pl")]
         public decimal UnrealizedPl { get; set; }
 

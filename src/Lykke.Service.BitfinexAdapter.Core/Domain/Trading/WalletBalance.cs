@@ -1,19 +1,13 @@
-﻿using Newtonsoft.Json;
-
-namespace Lykke.Service.BitfinexAdapter.Core.Domain.RestClient
+﻿namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 {
-    public sealed class BitfinexBalanceResponse
+    public sealed class WalletBalance
     {
-        [JsonProperty("type")]
         public string Type { get; set; }
 
-        [JsonProperty("currency")]
         public string Currency { get; set; }
 
-        [JsonProperty("amount")]
         public decimal Amount { get; set; }
 
-        [JsonProperty("available")]
         public decimal Available { get; set; }
 
        public override string ToString()

@@ -48,6 +48,11 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 
         protected override async Task MessageLoopImpl()
         {
+            if (!_configuration.RabbitMq.TickPrices.Enabled && !_configuration.RabbitMq.OrderBooks.Enabled)
+            {
+                return;
+            }
+
             try
             {
                 await Messenger.ConnectAsync(CancellationToken);
@@ -93,7 +98,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 
             if (_configuration.UseSupportedCurrencySymbolsAsFilter == false)
             {
-                var response = await _exchangeApi.GetAllSymbols(CancellationToken);
+                var response = await _exchangeApi.GetAllSymbolsAsync(CancellationToken);
                 if (response is Error error)
                 {
                     throw new ApiException(error.Message);

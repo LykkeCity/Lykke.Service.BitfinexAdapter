@@ -1,4 +1,5 @@
 ﻿using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Utils;
 using Microsoft.Rest;
 using Microsoft.Rest.Serialization;
@@ -84,7 +85,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         }
 
 
-        public async Task<object> AddOrder(string symbol, decimal amount, decimal price, string side, string type, CancellationToken cancellationToken = default)
+        public async Task<object> AddOrderAsync(string symbol, decimal amount, decimal price, string side, string type, CancellationToken cancellationToken = default)
         {
             var newOrder = new BitfinexNewOrderPost
             {
@@ -103,7 +104,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             return response;
         }
 
-        public async Task<object> CancelOrder(long orderId, CancellationToken cancellationToken = default)
+        public async Task<object> CancelOrderAsync(long orderId, CancellationToken cancellationToken = default)
         {
             var cancelPost = new BitfinexOrderStatusPost
             {
@@ -117,7 +118,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             return response;
         }
 
-        public async Task<object> GetActiveOrders(CancellationToken cancellationToken = default)
+        public async Task<object> GetActiveOrdersAsync(CancellationToken cancellationToken = default)
         {
             var activeOrdersPost = new BitfinexPostBase
             {
@@ -131,7 +132,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         }
 
 
-        public async Task<object> GetOrderStatus(long orderId, CancellationToken cancellationToken = default)
+        public async Task<object> GetOrderStatusAsync(long orderId, CancellationToken cancellationToken = default)
         {
             var orderStatusPost = new BitfinexOrderStatusPost
             {
@@ -146,19 +147,18 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         }
 
 
-        public async Task<object> GetBalances(CancellationToken cancellationToken = default)
+        public async Task<object> GetWalletBalancesAsync(CancellationToken cancellationToken = default)
         {
             var balancePost = new BitfinexPostBase();
             balancePost.Request = BalanceRequestUrl;
             balancePost.Nonce = UnixTimeConverter.UnixTimeStampUtc().ToString();
 
-            var response = await GetRestResponse<IReadOnlyList<BitfinexBalanceResponse>>(balancePost, cancellationToken);
+            var response = await GetRestResponse<IReadOnlyList<WalletBalance>>(balancePost, cancellationToken);
 
             return response;
         }
 
-
-        public async Task<object> GetMarginInformation(CancellationToken cancellationToken = default)
+        public async Task<object> GetMarginInformationAsync(CancellationToken cancellationToken = default)
         {
             var marginPost = new BitfinexPostBase
             {
@@ -172,7 +172,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             return response;
         }
 
-        public async Task<object> GetActivePositions(CancellationToken cancellationToken = default)
+        public async Task<object> GetActivePositionsAsync(CancellationToken cancellationToken = default)
         {
             var activePositionsPost = new BitfinexPostBase
             {
@@ -185,7 +185,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             return response;
         }
 
-        public async Task<object> GetAllSymbols(CancellationToken cancellationToken = default)
+        public async Task<object> GetAllSymbolsAsync(CancellationToken cancellationToken = default)
         {
             var response = await GetRestResponse<IReadOnlyList<string>>(new BitfinexGetBase { Request = AllSymbolsRequestUrl }, cancellationToken);
 

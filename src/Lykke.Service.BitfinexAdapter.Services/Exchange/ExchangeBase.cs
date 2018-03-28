@@ -74,6 +74,10 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             Stopped?.Invoke();
         }
 
+        public abstract Task<IReadOnlyCollection<WalletBalance>> GetWalletBalances(TimeSpan timeout);
+
+        public abstract Task<IReadOnlyCollection<MarginBalanceDomain>> GetMarginBalances(TimeSpan timeout);
+
         public abstract Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal,TimeSpan timeout);
 
         public abstract Task<ExecutionReport> CancelOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout);
@@ -82,17 +86,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
         {
             throw new NotSupportedException($"{Name} does not support receiving order information by {nameof(id)} and {nameof(instrument)}");
         }
-
-        public virtual Task<IEnumerable<AccountBalance>> GetAccountBalance(TimeSpan timeout)
-        {
-            return Task.FromResult(Enumerable.Empty<AccountBalance>());
-        }
-
-        public virtual Task<IReadOnlyCollection<TradingBalance>> GetTradeBalances(TimeSpan timeout)
-        {
-            throw new NotSupportedException();
-        }
-
+        
         public virtual Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout)
         {
             throw new NotSupportedException();
