@@ -23,15 +23,24 @@ namespace Lykke.Service.BitfinexAdapter.Core.Services
 
         Task<ExecutionReport> CancelOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout);
 
-        Task<ExecutionReport> GetOrder(string id, Instrument instrument, TimeSpan timeout);
+        Task<long> CancelOrder(long orderId, TimeSpan timeout);
+
+        Task<long?> ReplaceLimitOrder(long orderIdToCancel, TradingSignal newOrder, TimeSpan timeout);
+
+        Task<ExecutionReport> GetOrder(long id, TimeSpan timeout);
 
         Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout);
+
+        Task<IEnumerable<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout);
 
         Task<IReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout);
 
         StreamingSupport StreamingSupport { get; }
 
         Task<IReadOnlyList<string>> GetAllExchangeInstruments();
+
+
+
 
 
     }

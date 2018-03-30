@@ -1,5 +1,4 @@
 ﻿using Common.Log;
-using Lykke.Service.BitfinexAdapter.Core.Domain;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
 using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
@@ -200,7 +199,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
                 return;
             }
 
-            var tickPrice = new TickPrice(new Instrument(Constants.BitfinexExchangeName, pair), DateTime.UtcNow, 
+            var tickPrice = new TickPrice(new Instrument(pair), DateTime.UtcNow, 
                 ticker.Ask, ticker.Bid);
             await CallTickPricesHandlers(tickPrice);
         }

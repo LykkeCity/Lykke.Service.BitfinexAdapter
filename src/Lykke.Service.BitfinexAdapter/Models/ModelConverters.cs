@@ -1,4 +1,7 @@
 ﻿using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
+using Lykke.Service.BitfinexAdapter.Models.LimitOrders;
+using System;
 
 namespace Lykke.Service.BitfinexAdapter.Models
 {
@@ -28,5 +31,41 @@ namespace Lykke.Service.BitfinexAdapter.Models
                 TotalBalance = mb.Totalbalance
             };
         }
+
+        public static OrderModel ToApiModel(this ExecutionReport o)
+        {
+            return new OrderModel
+            {
+                Id = o.ExchangeOrderId,
+                Type = o.TradeType,
+                Symbol = o.Instrument.Name,
+                Side = o.Side.ToString(),
+                Volume = o.Volume,
+                Price = o.Price,
+                ExecutionStatus = o.ExecutionStatus.ToString(),
+                RemainingAmount = o.RemainingVolume,
+                Timestamp = o.Time,
+            };
+        }
+
+
+        public static TradingSignal ToLimitOrderTradingSignal(this LimitOrderRequest request, bool isMarginOrder)
+        {
+            return new TradingSignal(
+                new Instrument(request.Instrument),
+                orderId: null,
+                command: OrderCommand.Create,
+                tradeSide: request.TradeSide,
+                price: request.Price,
+                volume: request.Volume,
+                time: DateTime.UtcNow,
+                isMarginOrder: isMarginOrder,
+                orderType: OrderType.Limit
+                );
+        }
+
+
+
+        
     }
 }

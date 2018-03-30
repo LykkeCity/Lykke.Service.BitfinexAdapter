@@ -1,5 +1,4 @@
-﻿using Lykke.Service.BitfinexAdapter.Core.Domain;
-using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
+﻿using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
@@ -12,7 +11,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
     public sealed class BitfinexModelConverter : ExchangeConverters
     {
 
-        public BitfinexModelConverter(BitfinexAdapterSettings configuration) : base(configuration.SupportedCurrencySymbols, Constants.BitfinexExchangeName, configuration.UseSupportedCurrencySymbolsAsFilter)
+        public BitfinexModelConverter(BitfinexAdapterSettings configuration) : base(configuration.SupportedCurrencySymbols, configuration.UseSupportedCurrencySymbolsAsFilter)
         {
         }
 
@@ -33,8 +32,8 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
             var instrument = ExchangeSymbolToLykkeInstrument(eu.AssetPair);
             var transactionTime = eu.TimeStamp;
             var tradeType = ConvertTradeType(eu.Volume);
-            var orderId = eu.OrderId.ToString();
-            return new ExecutionReport(instrument, transactionTime, eu.Price, eu.Volume, tradeType, orderId, OrderExecutionStatus.Fill)
+            var orderId = eu.OrderId;
+            return new ExecutionReport(instrument, transactionTime, eu.Price, eu.Volume, tradeType, orderId, OrderExecutionStatus.Fill, eu.OrderType)
             {
                 Message = eu.OrderType,
                 Fee = eu.Fee,
@@ -42,7 +41,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
             };
         }
 
-        public string ConvertOrderType(OrderType type)
+        public string ConvertToMarginOrderType(OrderType type)
         {
             switch (type)
             {
@@ -50,40 +49,66 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
                     return "market";
                 case OrderType.Limit:
                     return "limit";
+                case OrderType.Stop:
+                    return "stop";
+                case OrderType.TrailingStop:
+                    return "trailing-stop";
+                case OrderType.FillOrKill:
+                    return "fill-or-kill";
+
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
+                    throw new ArgumentOutOfRangeException(nameof(type), type, $"Unrecognized order type: {type}");
             }
         }
 
-        public string ConvertTradeType(TradeType signalTradeType)
+        public string ConvertToSpotOrderType(OrderType type)
         {
-            switch (signalTradeType)
+            switch (type)
             {
-                case TradeType.Buy:
+                case OrderType.Market:
+                    return "exchange market";
+                case OrderType.Limit:
+                    return "exchange limit";
+                case OrderType.Stop:
+                    return "exchange stop";
+                case OrderType.TrailingStop:
+                    return "exchange trailing-stop";
+                case OrderType.FillOrKill:
+                    return "exchange fill-or-kill";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type), type, $"Unrecognized order type: {type}");
+            }
+        }
+
+        public string ConvertTradeType(TradeSide signalTradeSide)
+        {
+            switch (signalTradeSide)
+            {
+                case TradeSide.Buy:
                     return "buy";
-                case TradeType.Sell:
+                case TradeSide.Sell:
                     return "sell";
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(signalTradeType), signalTradeType, null);
+                    throw new ArgumentOutOfRangeException(nameof(signalTradeSide), signalTradeSide, $"Unrecognized order side: {signalTradeSide}");
             }
         }
 
-        public static TradeType ConvertTradeType(string signalTradeType)
+        public static TradeSide ConvertTradeType(string signalTradeType)
         {
             switch (signalTradeType)
             {
                 case "buy":
-                    return TradeType.Buy;
+                    return TradeSide.Buy;
                 case "sell":
-                    return TradeType.Sell;
+                    return TradeSide.Sell;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(signalTradeType), signalTradeType, null);
             }
         }
 
-        public static TradeType ConvertTradeType(decimal amount)
+        public static TradeSide ConvertTradeType(decimal amount)
         {
-            return amount > 0 ? TradeType.Buy : TradeType.Sell;
+            return amount > 0 ? TradeSide.Buy : TradeSide.Sell;
         }
 
     }

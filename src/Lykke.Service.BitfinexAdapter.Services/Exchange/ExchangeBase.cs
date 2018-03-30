@@ -30,7 +30,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             State = ExchangeState.Initializing;
             LykkeLog = log;
 
-            Instruments = config.SupportedCurrencySymbols?.Select(x => new Instrument(Name, x.LykkeSymbol)).ToList() ?? new List<Instrument>();
+            Instruments = config.SupportedCurrencySymbols?.Select(x => new Instrument(x.LykkeSymbol)).ToList() ?? new List<Instrument>();
 
             if (!Instruments.Any() && config.UseSupportedCurrencySymbolsAsFilter != false)
             {
@@ -82,15 +82,15 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public abstract Task<ExecutionReport> CancelOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout);
 
-        public virtual Task<ExecutionReport> GetOrder(string id, Instrument instrument, TimeSpan timeout)
-        {
-            throw new NotSupportedException($"{Name} does not support receiving order information by {nameof(id)} and {nameof(instrument)}");
-        }
-        
-        public virtual Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout)
-        {
-            throw new NotSupportedException();
-        }
+        public abstract Task<long> CancelOrder(long orderId, TimeSpan timeout);
+
+        public abstract Task<long?> ReplaceLimitOrder(long orderIdToCancel, TradingSignal newOrder, TimeSpan timeout);
+
+        public abstract Task<ExecutionReport> GetOrder(long id, TimeSpan timeout);
+
+        public abstract Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout);
+
+        public abstract Task<IEnumerable<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout);
 
         public virtual Task<IReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout)
         {

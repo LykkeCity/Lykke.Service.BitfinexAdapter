@@ -2,8 +2,10 @@
 {
     public enum OrderType
     {
-        Unknown,
         Market,
-        Limit
+        Limit,
+        Stop,
+        TrailingStop,
+        FillOrKill,
     }
 }

@@ -2,10 +2,9 @@
 {
     public class Instrument
     {
-        public Instrument(string exchange, string name)
+        public Instrument(string name)
         {
             Name = name;
-            Exchange = exchange;
 
             if (name.Length == 6)
             {
@@ -24,7 +23,7 @@
             }
         }
 
-        public Instrument(string exchange, string name, string @base, string quote) : this(exchange, name)
+        public Instrument(string name, string @base, string quote) : this(name)
         {
             Base = @base;
             Quote = quote;
@@ -32,26 +31,23 @@
 
         public string Name { get; }
 
-        public string Exchange { get; }
-
         public string Base { get; }
 
         public string Quote { get; }
 
         public override string ToString()
         {
-            return $"{Name} on {Exchange}";
+            return $"{Name}";
         }
 
         public override int GetHashCode()
         {
-            return Name.GetHashCode() ^ Exchange.GetHashCode();
+            return Name.GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
-            return ((obj as Instrument)?.Name.Equals(Name) ?? false)
-                   && ((Instrument)obj).Exchange.Equals(Exchange);
+            return (obj as Instrument)?.Name.Equals(Name) ?? false;
         }
 
         public static bool operator ==(Instrument left, Instrument right)
@@ -59,7 +55,7 @@
             if ((object)left == (object)right) return true;
             if ((object)left == null || (object)right == null) return false;
 
-            return left.Exchange == right.Exchange && left.Name == right.Name;
+            return left.Name == right.Name;
         }
 
         public static bool operator !=(Instrument left, Instrument right)

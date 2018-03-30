@@ -6,7 +6,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.RestClient
     public sealed class Order
     {
         [JsonProperty("id")]
-        public string Id { get; set; }
+        public long Id { get; set; }
 
         [JsonProperty("symbol")]
         public string Symbol { get; set; }

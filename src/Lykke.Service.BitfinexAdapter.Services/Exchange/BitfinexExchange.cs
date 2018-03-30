@@ -1,4 +1,5 @@
-﻿using Common.Log;
+﻿using Castle.Core.Internal;
+using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
@@ -31,7 +32,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             : base(Constants.BitfinexExchangeName, configuration, log)
         {
             _modelConverter = new BitfinexModelConverter(configuration);
-            var credenitals = new BitfinexServiceClientCredentials(apiKey, secret); //TODO: key/secret must come from config, after verifying client request X-API-KEY. We may need to create separe BitfinexExchange/BitfinexApi for each client. _orderBooksHarvester may need to be taken out from here and started separately.
+            var credenitals = new BitfinexServiceClientCredentials(apiKey, secret); 
             _exchangeApi = new BitfinexApi(credenitals)
             {
                 BaseUri = new Uri(configuration.EndpointUrl)
@@ -42,8 +43,8 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
         {
             var symbol = _modelConverter.LykkeSymbolToExchangeSymbol(signal.Instrument.Name);
             var volume = signal.Volume;
-            var orderType = _modelConverter.ConvertOrderType(signal.OrderType);
-            var side = _modelConverter.ConvertTradeType(signal.TradeType);
+            var orderType = signal.IsMarginOrder ? _modelConverter.ConvertToMarginOrderType(signal.OrderType) : _modelConverter.ConvertToSpotOrderType(signal.OrderType);
+            var side = _modelConverter.ConvertTradeType(signal.TradeSide);
             var price = signal.Price == 0 ? 1 : signal.Price ?? 1;
             var cts = new CancellationTokenSource(timeout);
 
@@ -51,7 +52,8 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
             if (response is Error error)
             {
-                throw new ApiException(error.Message);
+                await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), nameof(AddOrderAndWaitExecution), $"Request for order create returned error from exchange: {error.Message}. Order details: {signal}");
+                return null;
             }
 
             var trade = OrderToTrade((Order)response);
@@ -60,7 +62,6 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public override async Task<ExecutionReport> CancelOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout)
         {
-
             var cts = new CancellationTokenSource(timeout);
             if (!long.TryParse(signal.OrderId, out var id))
             {
@@ -75,17 +76,45 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             return trade;
         }
 
-        public override async Task<ExecutionReport> GetOrder(string id, Instrument instrument, TimeSpan timeout)
+        public override async Task<long> CancelOrder(long orderId, TimeSpan timeout)
         {
-            if (!long.TryParse(id, out var orderId))
-            {
-                throw new ApiException("Bitfinex order id can be only integer");
-            }
-            var cts = new CancellationTokenSource(timeout);
-            var response = await _exchangeApi.GetOrderStatusAsync(orderId, cts.Token);
+            return await CancelOrderById(orderId, timeout);
+        }
+
+
+        private async Task<long> CancelOrderById(long orderId, TimeSpan timeout)
+        {
+            var response = await _exchangeApi.CancelOrderAsync(orderId, new CancellationTokenSource(timeout).Token);
             if (response is Error error)
             {
-                throw new ApiException(error.Message);
+                await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), nameof(CancelOrder), $"Request for cancel orderId {orderId} returned error from exchange: {error.Message}");
+                return 0;
+            }
+            return ((Order)response).Id;
+        }
+
+        public override async Task<long?> ReplaceLimitOrder(long orderIdToCancel, TradingSignal newOrder, TimeSpan timeout)
+        {
+            var orderReplaced = await CancelOrderById(orderIdToCancel, timeout);
+            if (orderReplaced == 0)
+            {
+                return 0;
+            }
+
+            var newOrderCreated = await AddOrderAndWaitExecution(newOrder, timeout);
+
+            return newOrderCreated?.ExchangeOrderId;
+
+        }
+
+        public override async Task<ExecutionReport> GetOrder(long id, TimeSpan timeout)
+        {
+            var cts = new CancellationTokenSource(timeout);
+            var response = await _exchangeApi.GetOrderStatusAsync(id, cts.Token);
+            if (response is Error error)
+            {
+                await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), nameof(GetOrder), $"Request for orderId {id} returned error from exchange: {error.Message}");
+                return new ExecutionReport();
             }
             var trade = OrderToTrade((Order)response);
             return trade;
@@ -93,15 +122,42 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public override async Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout)
         {
+            return await GetActiveOrders(timeout);
+        }
 
+        private async Task<IEnumerable<ExecutionReport>> GetActiveOrders(TimeSpan timeout)
+        {
             var cts = new CancellationTokenSource(timeout);
             var response = await _exchangeApi.GetActiveOrdersAsync(cts.Token);
             if (response is Error error)
             {
-                throw new ApiException(error.Message);
+                await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), nameof(GetOpenOrders), $"Request for all active orders returned error from exchange: {error.Message}");
+                return null;
             }
             var trades = ((IReadOnlyCollection<Order>)response).Select(OrderToTrade);
             return trades;
+        }
+
+        public override async Task<IEnumerable<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout)
+        {
+            var orders = await GetActiveOrders(timeout);
+            if (orders == null)
+                return null;
+
+            orders = isMarginRequest ? orders.Where(o => o.TradeType == _modelConverter.ConvertToMarginOrderType(OrderType.Limit)) : 
+                                       orders.Where(o => o.TradeType == _modelConverter.ConvertToSpotOrderType(OrderType.Limit));
+
+            if (!orderIdFilter.IsNullOrEmpty())
+            {
+                orders = orders.Where(o => orderIdFilter.Contains(o.ExchangeOrderId));
+            }
+
+            if (!instrumentsFilter.IsNullOrEmpty())
+            {
+                orders = orders.Where(o => instrumentsFilter.Contains(o.Instrument.Name));
+            }
+
+            return orders;
         }
 
         public override async Task<IReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout)
@@ -207,16 +263,19 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             var id = order.Id;
             var execTime = order.Timestamp;
             var execPrice = order.Price;
-            var execVolume = order.ExecutedAmount;
+            var originalVolume = order.OriginalAmount;
             var tradeType = BitfinexModelConverter.ConvertTradeType(order.Side);
             var status = ConvertExecutionStatus(order);
             var instr = _modelConverter.ExchangeSymbolToLykkeInstrument(order.Symbol);
 
-            return new ExecutionReport(instr, execTime, execPrice, execVolume, tradeType, id, status)
+            return new ExecutionReport(instr, execTime, execPrice, originalVolume, tradeType, id, status, order.Type)
             {
                 ExecType = ExecType.Trade,
                 Success = true,
-                FailureType = OrderStatusUpdateFailureType.None
+                FailureType = OrderStatusUpdateFailureType.None,
+                RemainingVolume = order.RemainingAmount,
+                
+                
             };
         }
 

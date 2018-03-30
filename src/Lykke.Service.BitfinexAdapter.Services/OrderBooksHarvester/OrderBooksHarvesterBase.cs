@@ -48,8 +48,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 
             Log = log.CreateComponentScope(GetType().Name);
 
-            _converters = new ExchangeConverters(adapterSettings.SupportedCurrencySymbols,
-                string.Empty, adapterSettings.UseSupportedCurrencySymbolsAsFilter);
+            _converters = new ExchangeConverters(adapterSettings.SupportedCurrencySymbols, adapterSettings.UseSupportedCurrencySymbolsAsFilter);
 
             _orderBookSnapshots = new ConcurrentDictionary<string, OrderBookSnapshot>();
             _cancellationTokenSource = new CancellationTokenSource();

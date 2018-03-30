@@ -1,4 +1,5 @@
-﻿using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
+﻿using Lykke.Service.BitfinexAdapter.Core.Domain;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using System;
 using System.Collections.Generic;
@@ -9,15 +10,13 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
     public class ExchangeConverters
     {
         private readonly IReadOnlyCollection<CurrencySymbol> _currencySymbols;
-        private readonly string _exchangeName;
         private readonly bool _useSupportedCurrencySymbolsAsFilter;
 
         public ExchangeConverters(IReadOnlyCollection<CurrencySymbol> currencySymbols,
-            string exchangeName, bool useSupportedCurrencySymbolsAsFilter)
+            bool useSupportedCurrencySymbolsAsFilter)
         {
             _currencySymbols = currencySymbols;
             _useSupportedCurrencySymbolsAsFilter = useSupportedCurrencySymbolsAsFilter;
-            _exchangeName = exchangeName;
         }
 
         public string LykkeSymbolToExchangeSymbol(string lykkeSymbol)
@@ -25,7 +24,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
             var foundSymbol = _currencySymbols.FirstOrDefault(s => s.LykkeSymbol == lykkeSymbol);
             if (foundSymbol == null && _useSupportedCurrencySymbolsAsFilter)
             {
-                throw new ArgumentException($"Symbol {lykkeSymbol} is not mapped to {_exchangeName} value");
+                throw new ArgumentException($"Symbol {lykkeSymbol} is not mapped to {Constants.BitfinexExchangeName} value");
             }
             return foundSymbol?.ExchangeSymbol ?? lykkeSymbol;
         }
@@ -36,9 +35,9 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
             if (foundSymbol == null && _useSupportedCurrencySymbolsAsFilter)
             {
                 throw new ArgumentException(
-                    $"Symbol {exchangeSymbol} in {_exchangeName} is not mapped to lykke value");
+                    $"Symbol {exchangeSymbol} in {Constants.BitfinexExchangeName} is not mapped to lykke value");
             }
-            return new Instrument(_exchangeName, foundSymbol?.LykkeSymbol ?? exchangeSymbol);
+            return new Instrument(foundSymbol?.LykkeSymbol ?? exchangeSymbol);
         }
     }
 }
