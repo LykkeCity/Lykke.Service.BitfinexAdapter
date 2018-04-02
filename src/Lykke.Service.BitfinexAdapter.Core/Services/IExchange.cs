@@ -19,13 +19,11 @@ namespace Lykke.Service.BitfinexAdapter.Core.Services
 
         Task<IReadOnlyCollection<WalletBalance>> GetWalletBalances(TimeSpan timeout);
 
-        Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout);
+        Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout, long orderIdToReplace = 0);
 
         Task<ExecutionReport> CancelOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout);
 
         Task<long> CancelOrder(long orderId, TimeSpan timeout);
-
-        Task<long?> ReplaceLimitOrder(long orderIdToCancel, TradingSignal newOrder, TimeSpan timeout);
 
         Task<ExecutionReport> GetOrder(long id, TimeSpan timeout);
 

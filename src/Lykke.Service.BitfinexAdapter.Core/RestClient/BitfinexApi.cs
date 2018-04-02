@@ -1,4 +1,6 @@
-﻿using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
+﻿using Common.Log;
+using Lykke.Service.BitfinexAdapter.Core.Domain.JsonConverters;
+using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Utils;
 using Microsoft.Rest;
@@ -7,7 +9,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -21,6 +22,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         private const string NewOrderRequestUrl = @"/v1/order/new";
         private const string OrderStatusRequestUrl = @"/v1/order/status";
         private const string OrderCancelRequestUrl = @"/v1/order/cancel";
+        private const string OrderCancelWithReplaceRequestUrl = @"/v1/order/cancel/replace";
 
         private const string ActiveOrdersRequestUrl = @"/v1/orders";
         private const string ActivePositionsRequestUrl = @"/v1/positions";
@@ -31,6 +33,8 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         private const string BaseBitfinexUrl = @"https://api.bitfinex.com";
 
         private const string Exchange = "bitfinex";
+
+        private readonly ILog _log;
 
 
         public Uri BaseUri { get; set; }
@@ -47,10 +51,11 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         /// </summary>
         public JsonSerializerSettings DeserializationSettings { get; private set; }
 
-        public BitfinexApi(ServiceClientCredentials credentials)
+        public BitfinexApi(ServiceClientCredentials credentials, ILog log)
         {
             _credentials = credentials;
             Initialize();
+            _log = log;
         }
 
         private void Initialize()
@@ -79,11 +84,11 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
                 ContractResolver = new ReadOnlyJsonContractResolver(),
                 Converters = new List<JsonConverter>
                 {
+                    new BitfinexDateTimeConverter(),
                     new Iso8601TimeSpanConverter()
                 }
             };
         }
-
 
         public async Task<object> AddOrderAsync(string symbol, decimal amount, decimal price, string side, string type, CancellationToken cancellationToken = default)
         {
@@ -96,6 +101,26 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
                 Side = side,
                 Type = type,
                 Request = NewOrderRequestUrl,
+                Nonce = UnixTimeConverter.UnixTimeStampUtc().ToString()
+            };
+
+            var response = await GetRestResponse<Order>(newOrder, cancellationToken);
+
+            return response;
+        }
+
+        public async Task<object> ReplaceOrderAsync(long orderIdToReplace, string symbol, decimal amount, decimal price, string side, string type, CancellationToken cancellationToken = default)
+        {
+            var newOrder = new BitfinexReplaceOrderPost()
+            {
+                OrderIdToReplace = orderIdToReplace,
+                Symbol = symbol,
+                Amount = amount,
+                Price = price,
+                Exchange = Exchange,
+                Side = side,
+                Type = type,
+                Request = OrderCancelWithReplaceRequestUrl,
                 Nonce = UnixTimeConverter.UnixTimeStampUtc().ToString()
             };
 
@@ -244,23 +269,29 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         {
             using (var response = await HttpClient.SendAsync(request, cancellationToken))
             {
-                var responseBody = await CheckError<T>(response);
-                return responseBody;
+                try
+                {
+                    var responseBody = await CheckError<T>(response);
+                    return responseBody;
+                }
+                catch (Exception e)
+                {
+                    await _log.WriteErrorAsync(nameof(BitfinexApi), request.RequestUri.AbsoluteUri, e);
+                    throw;
+                }
             }
         }
 
         private async Task<object> CheckError<T>(HttpResponseMessage response)
         {
-            switch (response.StatusCode)
+            if (response.IsSuccessStatusCode)
             {
-                case HttpStatusCode.OK:
-                    return SafeJsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync(), DeserializationSettings);
-                case HttpStatusCode.BadRequest:
-                case HttpStatusCode.NotFound:
-                    return JsonConvert.DeserializeObject<Error>((string)await response.Content.ReadAsStringAsync(), (JsonSerializerSettings)DeserializationSettings);
-                default:
-                    throw new HttpOperationException(string.Format("Operation returned an invalid status code '{0}'", response.StatusCode));
+                return JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync(), DeserializationSettings);
             }
+
+            var error = JsonConvert.DeserializeObject<Error>(await response.Content.ReadAsStringAsync(), DeserializationSettings);
+            error.HttpApiStatusCode = response.StatusCode;
+            return error;
         }
 
         private sealed class StringDecimalConverter : JsonConverter

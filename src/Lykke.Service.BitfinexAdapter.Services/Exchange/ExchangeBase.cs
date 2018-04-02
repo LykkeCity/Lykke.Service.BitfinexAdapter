@@ -78,13 +78,11 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public abstract Task<IReadOnlyCollection<MarginBalanceDomain>> GetMarginBalances(TimeSpan timeout);
 
-        public abstract Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal,TimeSpan timeout);
+        public abstract Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout, long orderIdToReplace = 0);
 
         public abstract Task<ExecutionReport> CancelOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout);
 
         public abstract Task<long> CancelOrder(long orderId, TimeSpan timeout);
-
-        public abstract Task<long?> ReplaceLimitOrder(long orderIdToCancel, TradingSignal newOrder, TimeSpan timeout);
 
         public abstract Task<ExecutionReport> GetOrder(long id, TimeSpan timeout);
 

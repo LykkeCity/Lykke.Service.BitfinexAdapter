@@ -1,5 +1,6 @@
 ﻿using Common.Log;
 using Lykke.Service.BitfinexAdapter.Authentication;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Models;
 using Lykke.Service.BitfinexAdapter.Models.LimitOrders;
@@ -37,15 +38,23 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("CreateLimitOrder")]
         [HttpPost("order/limit")]
         [ProducesResponseType(typeof(long), 200)]
+        [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> CreateLimitOrder(LimitOrderRequest request)
         {
-            var result = await GetAuthenticatedExchange().AddOrderAndWaitExecution(request.ToLimitOrderTradingSignal(false),TimeSpan.FromSeconds(DefaultTimeOutSeconds));
-            if (result == null)
+            try
             {
-                return NotFound(); // TODO: Better to return 500 Internal Server Error
+                var result = await GetAuthenticatedExchange().AddOrderAndWaitExecution(request.ToLimitOrderTradingSignal(false), TimeSpan.FromSeconds(DefaultTimeOutSeconds));
+                return Ok(result.ExchangeOrderId);
             }
-
-            return Ok(result.ExchangeOrderId);
+            catch (ApiException ex)
+            {
+                if (ex.ApiStatusCode == HttpStatusCode.BadRequest)
+                {
+                    return BadRequest(ex.Message);
+                }
+                return StatusCode((int) HttpStatusCode.InternalServerError);
+            }
         }
 
         /// <summary>
@@ -54,21 +63,17 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("GetLimitOrders")]
         [HttpGet("orders/limit")]
         [ProducesResponseType(typeof(IEnumerable<OrderModel>), 200)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> GetLimitOrders([FromQuery]long[] Ids, [FromQuery]string[] Instruments  /*[FromBody]OrdersRequestWithFilter ordersFilter*/)  //With HttpPost
+        public async Task<IActionResult> GetLimitOrders(string orderIds, string instruments)
         {
-            //With HttpPost //var orders = await GetAuthenticatedExchange().GetLimitOrders(ordersFilter.Instruments?.ToList(), ordersFilter.Ids?.ToList(), false, TimeSpan.FromSeconds(DefaultTimeOutSeconds));
-            var orders = await GetAuthenticatedExchange().GetLimitOrders(Instruments?.ToList(), Ids?.ToList(), false, TimeSpan.FromSeconds(DefaultTimeOutSeconds));
-            if (orders == null)
+            var orderIdsParsed = orderIds?.Split(",").Select(s =>
             {
-                return NotFound();
-            }
+                if(long.TryParse(s.Trim(), out var parsed)) { return parsed; } return 0;
+            }).Where(s=>s!=0).ToList();
 
+            
+            var orders = await GetAuthenticatedExchange().GetLimitOrders(instruments?.Split(",").Select(s=>s.Trim()).ToList(), orderIdsParsed, false, TimeSpan.FromSeconds(DefaultTimeOutSeconds));
             return Ok(orders.Select(s => s.ToApiModel()));
         }
-
-        public long[] Ids { get; set; }
-        public string[] Instruments { get; set; }
 
         /// <summary>
         /// Replacel limit order. Cancel one and create new. 
@@ -76,23 +81,33 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("ReplaceLimitOrder")]
         [HttpPost("order/replace")]
         [ProducesResponseType(typeof(long), 200)]
-        [ProducesResponseType(typeof(string), (int) HttpStatusCode.InternalServerError)]
+        [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(string), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int) HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> ReplaceLimitOrder(ReplaceLimitOrderRequest request)
         {
-            var result = await GetAuthenticatedExchange().ReplaceLimitOrder(request.OrderIdToCancel, request.ToLimitOrderTradingSignal(false), TimeSpan.FromSeconds(DefaultTimeOutSeconds));
-
-            if (!result.HasValue)
+            try
             {
-                return StatusCode(500, "Requested order was cancelled, but an error occured while creating new one.");
+                if (request.OrderIdToCancel <= 0)
+                {
+                    return BadRequest("OrderId to replace not specified.");
+                }
+
+                var result = await GetAuthenticatedExchange().AddOrderAndWaitExecution(request.ToLimitOrderTradingSignal(false), TimeSpan.FromSeconds(DefaultTimeOutSeconds), request.OrderIdToCancel);
+                return Ok(result.ExchangeOrderId);
             }
-
-
-            if (result.Value == 0)
+            catch (ApiException ex)
             {
-                NotFound("Requested order to cancel(replace) was not found. A new order has not been created.");
+                if (ex.ApiStatusCode == HttpStatusCode.BadRequest)
+                {
+                    return BadRequest(ex.Message);
+                }
+                if (ex.ApiStatusCode == HttpStatusCode.NotFound)
+                {
+                    return NotFound(ex.Message);
+                }
+                return StatusCode((int)HttpStatusCode.InternalServerError);
             }
-
-            return Ok(request.OrderIdToCancel);
         }
     }
 }

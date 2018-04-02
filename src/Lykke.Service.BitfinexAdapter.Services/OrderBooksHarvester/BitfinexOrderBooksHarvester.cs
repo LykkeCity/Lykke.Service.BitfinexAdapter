@@ -37,7 +37,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             _channels = new Dictionary<long, Channel>();
             _tickPriceHandler = tickPriceHandler;
             var credenitals = new BitfinexServiceClientCredentials(String.Empty, String.Empty); // bitfinex does not require key/scret for public events
-            _exchangeApi = new BitfinexApi(credenitals)
+            _exchangeApi = new BitfinexApi(credenitals, log)
             {
                 BaseUri = new Uri(configuration.EndpointUrl)
             };

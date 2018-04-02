@@ -21,7 +21,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
 
         public string LykkeSymbolToExchangeSymbol(string lykkeSymbol)
         {
-            var foundSymbol = _currencySymbols.FirstOrDefault(s => s.LykkeSymbol == lykkeSymbol);
+            var foundSymbol = _currencySymbols.FirstOrDefault(s => s.LykkeSymbol.Equals(lykkeSymbol, StringComparison.InvariantCultureIgnoreCase) );
             if (foundSymbol == null && _useSupportedCurrencySymbolsAsFilter)
             {
                 throw new ArgumentException($"Symbol {lykkeSymbol} is not mapped to {Constants.BitfinexExchangeName} value");
@@ -31,7 +31,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
 
         public Instrument ExchangeSymbolToLykkeInstrument(string exchangeSymbol)
         {
-            var foundSymbol = _currencySymbols.FirstOrDefault(s => s.ExchangeSymbol == exchangeSymbol);
+            var foundSymbol = _currencySymbols.FirstOrDefault(s => s.ExchangeSymbol.Equals(exchangeSymbol, StringComparison.InvariantCultureIgnoreCase) );
             if (foundSymbol == null && _useSupportedCurrencySymbolsAsFilter)
             {
                 throw new ArgumentException(

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Net;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Domain.RestClient
 {
@@ -6,6 +7,9 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.RestClient
     {
         [JsonProperty("message")]
         public string Message { get; set; }
+
+        [JsonProperty("httpStatusCode")]
+        public HttpStatusCode HttpApiStatusCode { get; set; }
     }
 
 }
