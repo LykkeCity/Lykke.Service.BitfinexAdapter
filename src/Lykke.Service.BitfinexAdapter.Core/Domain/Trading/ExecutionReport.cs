@@ -19,10 +19,9 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
         public Instrument Instrument { get; internal set; }
 
         /// <summary>
-        /// A side of the order
+        /// OrderType
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public string TradeType { get; internal set; }
+        public string OrderType { get; internal set; }
 
         /// <summary>
         /// A trade direction
@@ -100,7 +99,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
             Fee = 0; // TODO
             ExchangeOrderId = orderId;
             ExecutionStatus = executionStatus;
-            TradeType = tradeType;
+            OrderType = tradeType;
         }
 
         public override string ToString()

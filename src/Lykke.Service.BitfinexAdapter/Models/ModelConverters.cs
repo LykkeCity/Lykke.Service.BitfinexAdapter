@@ -37,7 +37,7 @@ namespace Lykke.Service.BitfinexAdapter.Models
             return new OrderModel
             {
                 Id = o.ExchangeOrderId,
-                Type = o.TradeType,
+                Type = o.OrderType,
                 Symbol = o.Instrument.Name,
                 Side = o.Side.ToString(),
                 Volume = o.Volume,
@@ -49,7 +49,7 @@ namespace Lykke.Service.BitfinexAdapter.Models
         }
 
 
-        public static TradingSignal ToLimitOrderTradingSignal(this LimitOrderRequest request, bool isMarginOrder)
+        public static TradingSignal ToLimitOrder(this LimitOrderRequest request, bool isMarginOrder)
         {
             return new TradingSignal(
                 new Instrument(request.Instrument),
@@ -64,8 +64,23 @@ namespace Lykke.Service.BitfinexAdapter.Models
                 );
         }
 
+        public static TradingSignal ToMarketOrder(this MarketOrderRequest request, bool isMarginOrder)
+        {
+            return new TradingSignal(
+                new Instrument(request.Instrument),
+                orderId: null,
+                command: OrderCommand.Create,
+                tradeSide: request.TradeSide,
+                price: 0,
+                volume: request.Volume,
+                time: DateTime.UtcNow,
+                isMarginOrder: isMarginOrder,
+                orderType: OrderType.Market
+            );
+        }
 
 
-        
+
+
     }
 }

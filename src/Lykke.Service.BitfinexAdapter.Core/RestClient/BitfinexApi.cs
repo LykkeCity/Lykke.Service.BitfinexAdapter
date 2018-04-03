@@ -23,6 +23,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         private const string OrderStatusRequestUrl = @"/v1/order/status";
         private const string OrderCancelRequestUrl = @"/v1/order/cancel";
         private const string OrderCancelWithReplaceRequestUrl = @"/v1/order/cancel/replace";
+        private const string InactiveOrdersRequestUrl = @"/v1/orders/hist";
 
         private const string ActiveOrdersRequestUrl = @"/v1/orders";
         private const string ActivePositionsRequestUrl = @"/v1/positions";
@@ -152,6 +153,19 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             };
 
             var response = await GetRestResponse<IReadOnlyList<Order>>(activeOrdersPost, cancellationToken);
+
+            return response;
+        }
+
+        public async Task<object> GetInactiveOrdersAsync(CancellationToken cancellationToken = default)
+        {
+            var inactiveOrdersPost = new BitfinexPostBase
+            {
+                Request = InactiveOrdersRequestUrl,
+                Nonce = UnixTimeConverter.UnixTimeStampUtc().ToString()
+            };
+
+            var response = await GetRestResponse<IReadOnlyList<Order>>(inactiveOrdersPost, cancellationToken);
 
             return response;
         }

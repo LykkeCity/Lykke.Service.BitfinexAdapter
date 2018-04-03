@@ -88,6 +88,8 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public abstract Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout);
 
+        public abstract Task<IEnumerable<ExecutionReport>> GetOrdersHistory(TimeSpan timeout);
+
         public abstract Task<IEnumerable<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout);
 
         public virtual Task<IReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout)

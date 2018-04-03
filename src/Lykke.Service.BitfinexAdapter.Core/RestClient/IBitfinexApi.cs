@@ -10,6 +10,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         Task<object> ReplaceOrderAsync(long orderIdToReplace, string symbol, decimal amount, decimal price, string side, string type, CancellationToken cancellationToken = default);
         Task<object> CancelOrderAsync(long orderId, CancellationToken cancellationToken = default);
         Task<object> GetActiveOrdersAsync(CancellationToken cancellationToken = default);
+        Task<object> GetInactiveOrdersAsync(CancellationToken cancellationToken = default);
         Task<object> GetOrderStatusAsync(long orderId, CancellationToken cancellationToken = default);
         Task<object> GetWalletBalancesAsync(CancellationToken cancellationToken = default);
         Task<object> GetMarginInformationAsync(CancellationToken cancellationToken = default);

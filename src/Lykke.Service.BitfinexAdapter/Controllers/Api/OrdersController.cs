@@ -20,17 +20,17 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         {
         }
 
-        /// <summary>
-        /// View your active orders
-        /// </summary>
-        [SwaggerOperation("GetAllActiveOrders")]
-        [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<OrderModel>), 200)]
-        public async Task<IActionResult> GetAllActiveOrders()
-        {
-            var orders = await GetAuthenticatedExchange().GetOpenOrders(TimeSpan.FromSeconds(DefaultTimeOutSeconds));
-            return Ok(orders.Select(s => s.ToApiModel())); 
-        }
+        ///// <summary>
+        ///// View your active orders
+        ///// </summary>
+        //[SwaggerOperation("GetAllActiveOrders")]
+        //[HttpGet]
+        //[ProducesResponseType(typeof(IEnumerable<OrderModel>), 200)]
+        //public async Task<IActionResult> GetAllActiveOrders()
+        //{
+        //    var orders = await GetAuthenticatedExchange().GetOpenOrders(TimeSpan.FromSeconds(DefaultTimeOutSeconds));
+        //    return Ok(orders.Select(s => s.ToApiModel())); 
+        //}
 
         /// <summary>
         /// Get order by Id
@@ -83,6 +83,18 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
                 }
                 return StatusCode((int) HttpStatusCode.InternalServerError);
             }
+        }
+
+        /// <summary>
+        /// View your inactive (history) orders
+        /// </summary>
+        [SwaggerOperation("GetOrdersHistory")]
+        [HttpGet("history")]
+        [ProducesResponseType(typeof(IEnumerable<OrderModel>), 200)]
+        public async Task<IActionResult> GetOrdersHistory()
+        {
+            var orders = await GetAuthenticatedExchange().GetOrdersHistory(TimeSpan.FromSeconds(DefaultTimeOutSeconds));
+            return Ok(orders.Select(s => s.ToApiModel()));
         }
     }
 }

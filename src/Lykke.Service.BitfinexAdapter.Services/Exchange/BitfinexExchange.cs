@@ -104,13 +104,18 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public override async Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout)
         {
-            return await GetActiveOrders(timeout);
+            return await GetOrders(_exchangeApi.GetActiveOrdersAsync,timeout);
         }
 
-        private async Task<IEnumerable<ExecutionReport>> GetActiveOrders(TimeSpan timeout)
+        public override async Task<IEnumerable<ExecutionReport>> GetOrdersHistory(TimeSpan timeout)
+        {
+            return await GetOrders(_exchangeApi.GetInactiveOrdersAsync, timeout);
+        }
+
+        private async Task<IEnumerable<ExecutionReport>> GetOrders(Func<CancellationToken, Task<object>> apiOrdersCall, TimeSpan timeout)
         {
             var cts = new CancellationTokenSource(timeout);
-            var response = await _exchangeApi.GetActiveOrdersAsync(cts.Token);
+            var response = await apiOrdersCall(cts.Token);  
             if (response is Error error)
             {
                 await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), nameof(GetOpenOrders), $"Request for all active orders returned error from exchange: {error.Message}");
@@ -122,10 +127,10 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public override async Task<IEnumerable<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout)
         {
-            var orders = await GetActiveOrders(timeout);
+            var orders = await GetOrders(_exchangeApi.GetActiveOrdersAsync, timeout); 
 
-            orders = isMarginRequest ? orders.Where(o => o.TradeType == _modelConverter.ConvertToMarginOrderType(OrderType.Limit)) : 
-                                       orders.Where(o => o.TradeType == _modelConverter.ConvertToSpotOrderType(OrderType.Limit));
+            orders = isMarginRequest ? orders.Where(o => o.OrderType.Equals(_modelConverter.ConvertToMarginOrderType(OrderType.Limit), StringComparison.InvariantCultureIgnoreCase)) : 
+                                       orders.Where(o => o.OrderType.Equals(_modelConverter.ConvertToSpotOrderType(OrderType.Limit), StringComparison.InvariantCultureIgnoreCase));
 
             if (!orderIdFilter.IsNullOrEmpty())
             {

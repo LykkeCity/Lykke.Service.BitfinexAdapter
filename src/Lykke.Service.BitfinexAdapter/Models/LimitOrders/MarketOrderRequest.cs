@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Lykke.Service.BitfinexAdapter.Models.LimitOrders
 {
-    public class LimitOrderRequest
+    public class MarketOrderRequest
     {
         /// <summary>
         /// name of instrument (asset pair)
@@ -12,13 +12,6 @@ namespace Lykke.Service.BitfinexAdapter.Models.LimitOrders
         [JsonProperty("instrument")]
         [Required]
         public string Instrument { get; set; }
-
-        /// <summary>
-        /// price of order
-        /// </summary>
-        [JsonProperty("price")]
-        [Required]
-        public decimal Price { get; set; }
 
         /// <summary>
         /// volume of order
@@ -33,6 +26,7 @@ namespace Lykke.Service.BitfinexAdapter.Models.LimitOrders
         [JsonProperty("tradeSide")]
         [Required]
         public TradeSide TradeSide { get; set; } //needs validation
+
 
     }
 }
