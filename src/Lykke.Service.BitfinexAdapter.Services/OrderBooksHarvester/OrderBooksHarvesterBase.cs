@@ -258,9 +258,8 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             else
             {
                 CancelSnapshotRefresh();
+                await PublishOrderBookSnapshotAsync(pair);
             }
-
-            await PublishOrderBookSnapshotAsync(pair);
         }
 
         private void ScheduleSnapshotRefresh()
