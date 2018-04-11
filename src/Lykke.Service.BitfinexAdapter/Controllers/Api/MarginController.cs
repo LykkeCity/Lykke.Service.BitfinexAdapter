@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 {
+    [Route("margin")]
     [ApiKeyAuth]
     public class MarginController : BaseApiController
     {

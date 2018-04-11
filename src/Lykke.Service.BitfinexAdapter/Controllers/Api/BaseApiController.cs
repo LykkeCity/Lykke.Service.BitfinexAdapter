@@ -10,7 +10,7 @@ using System.Security.Authentication;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 {
-    [Route("api/v1/[controller]")]
+
     [Produces("application/json")]
     [LoggingAspNetFilter]
     public abstract class BaseApiController : Controller

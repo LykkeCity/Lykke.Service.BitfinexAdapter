@@ -27,7 +27,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
         /// A trade direction
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public TradeSide Side { get; internal set; }
+        public TradeType tradeType { get; internal set; }
 
         /// <summary>
         /// Transaction time
@@ -39,11 +39,14 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
         /// </summary>
         public decimal Price { get; internal set; }
 
+        public decimal AvgExecutionPrice { get; set; }
+
         /// <summary>
         /// Trade volume
         /// </summary>
-        public decimal Volume { get; internal set; }
+        public decimal OriginalVolume { get; internal set; }
 
+        public decimal ExecutedVolume { get; set; }
 
         public decimal RemainingVolume { get; set; }
 
@@ -89,17 +92,19 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 
         [JsonConstructor]
         public ExecutionReport(Instrument instrument, DateTime time, decimal price,
-            decimal volume, TradeSide side, long orderId, OrderExecutionStatus executionStatus, string tradeType)
+            decimal originalVolume, decimal executedVolume, TradeType _tradeType, long orderId, OrderExecutionStatus executionStatus, string orderType, decimal avgExecutionPrice)
         {
             Instrument = instrument;
             Time = time;
             Price = price;
-            Volume = volume;
-            Side = side;
+            OriginalVolume = originalVolume;
+            tradeType = _tradeType;
             Fee = 0; // TODO
             ExchangeOrderId = orderId;
             ExecutionStatus = executionStatus;
-            OrderType = tradeType;
+            OrderType = orderType;
+            AvgExecutionPrice = avgExecutionPrice;
+            ExecutedVolume = executedVolume;
         }
 
         public override string ToString()

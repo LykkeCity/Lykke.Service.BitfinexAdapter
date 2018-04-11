@@ -1,6 +1,6 @@
 ﻿namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums
 {
-    public enum TradeSide
+    public enum TradeType
     {
         Buy,
         Sell

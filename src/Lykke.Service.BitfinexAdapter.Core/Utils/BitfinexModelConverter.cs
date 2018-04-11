@@ -33,7 +33,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
             var transactionTime = eu.TimeStamp;
             var tradeType = ConvertTradeType(eu.Volume);
             var orderId = eu.OrderId;
-            return new ExecutionReport(instrument, transactionTime, eu.Price, eu.Volume, tradeType, orderId, OrderExecutionStatus.Fill, eu.OrderType)
+            return new ExecutionReport(instrument, transactionTime, eu.OrderPrice ?? 0 /*could it be 0 when its a market order?*/, eu.Volume/*we set status to Fill, hence original and executed amount should be equal*/, eu.Volume, tradeType, orderId, OrderExecutionStatus.Fill, eu.OrderType, eu.Price)
             {
                 Message = eu.OrderType,
                 Fee = eu.Fee,
@@ -80,35 +80,35 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
             }
         }
 
-        public string ConvertTradeType(TradeSide signalTradeSide)
+        public string ConvertTradeType(TradeType signalTradeType)
         {
-            switch (signalTradeSide)
+            switch (signalTradeType)
             {
-                case TradeSide.Buy:
+                case TradeType.Buy:
                     return "buy";
-                case TradeSide.Sell:
+                case TradeType.Sell:
                     return "sell";
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(signalTradeSide), signalTradeSide, $"Unrecognized order side: {signalTradeSide}");
+                    throw new ArgumentOutOfRangeException(nameof(signalTradeType), signalTradeType, $"Unrecognized trade type: {signalTradeType}");
             }
         }
 
-        public static TradeSide ConvertTradeType(string signalTradeType)
+        public static TradeType ConvertTradeType(string signalTradeType)
         {
             switch (signalTradeType)
             {
                 case "buy":
-                    return TradeSide.Buy;
+                    return TradeType.Buy;
                 case "sell":
-                    return TradeSide.Sell;
+                    return TradeType.Sell;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(signalTradeType), signalTradeType, null);
             }
         }
 
-        public static TradeSide ConvertTradeType(decimal amount)
+        public static TradeType ConvertTradeType(decimal amount)
         {
-            return amount > 0 ? TradeSide.Buy : TradeSide.Sell;
+            return amount > 0 ? TradeType.Buy : TradeType.Sell;
         }
 
     }

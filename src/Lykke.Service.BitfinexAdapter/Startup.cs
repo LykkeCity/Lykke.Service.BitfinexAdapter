@@ -2,12 +2,14 @@
 using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
 using Common.Log;
+using FluentValidation.AspNetCore;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
 using Lykke.Service.BitfinexAdapter.Authentication;
 using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Core.Settings;
+using Lykke.Service.BitfinexAdapter.Models.Validation;
 using Lykke.Service.BitfinexAdapter.Modules;
 using Lykke.SettingsReader;
 using Lykke.SlackNotification.AzureQueue;
@@ -41,7 +43,11 @@ namespace Lykke.Service.BitfinexAdapter
         {
             try
             {
-                services.AddMvc()
+                services.AddMvc(options =>
+                    {
+                        options.Filters.Add<ValidateModelAttribute>();
+                    })
+                    .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Startup>())
                     .AddJsonOptions(options =>
                     {
                         options.SerializerSettings.ContractResolver =

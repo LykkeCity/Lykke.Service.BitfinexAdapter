@@ -45,12 +45,12 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             var symbol = _modelConverter.LykkeSymbolToExchangeSymbol(signal.Instrument.Name);
             var volume = signal.Volume;
             var orderType = signal.IsMarginOrder ? _modelConverter.ConvertToMarginOrderType(signal.OrderType) : _modelConverter.ConvertToSpotOrderType(signal.OrderType);
-            var side = _modelConverter.ConvertTradeType(signal.TradeSide);
+            var tradeType = _modelConverter.ConvertTradeType(signal.TradeType);
             var price = signal.Price == 0 ? 1 : signal.Price ?? 1;
             var cts = new CancellationTokenSource(timeout);
 
-            var response = orderIdToReplace!=0 ? await _exchangeApi.ReplaceOrderAsync(orderIdToReplace, symbol, volume, price, side, orderType, cts.Token):
-                                                 await _exchangeApi.AddOrderAsync(symbol, volume, price, side, orderType, cts.Token);
+            var response = orderIdToReplace!=0 ? await _exchangeApi.ReplaceOrderAsync(orderIdToReplace, symbol, volume, price, tradeType, orderType, cts.Token):
+                                                 await _exchangeApi.AddOrderAsync(symbol, volume, price, tradeType, orderType, cts.Token);
             if (response is Error error)
             {
                 await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), nameof(AddOrderAndWaitExecution), $"Request for order create returned error from exchange: {error.Message}. Order details: {signal}");
@@ -247,13 +247,13 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
         {
             var id = order.Id;
             var execTime = order.Timestamp;
-            var execPrice = order.Price;
+            var orderPrice = order.Price;
             var originalVolume = order.OriginalAmount;
-            var tradeType = BitfinexModelConverter.ConvertTradeType(order.Side);
+            var tradeType = BitfinexModelConverter.ConvertTradeType(order.TradeType);
             var status = ConvertExecutionStatus(order);
             var instr = _modelConverter.ExchangeSymbolToLykkeInstrument(order.Symbol);
 
-            return new ExecutionReport(instr, execTime, execPrice, originalVolume, tradeType, id, status, order.Type)
+            return new ExecutionReport(instr, execTime, orderPrice, originalVolume, order.ExecutedAmount, tradeType, id, status, order.OrderType, order.AvgExecutionPrice)
             {
                 ExecType = ExecType.Trade,
                 Success = true,
@@ -273,8 +273,6 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
         {
 
         }
-
-
 
         private static OrderExecutionStatus ConvertExecutionStatus(Order order)
         {

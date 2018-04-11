@@ -14,20 +14,23 @@ namespace Lykke.Service.BitfinexAdapter.Models
         [JsonProperty("price")]
         public decimal Price { get; set; }
 
+        [JsonProperty("originalAmount")]
+        public decimal OriginalVolume { get; set; }
+
         [JsonProperty("tradeType")]
-        public string Side { get; set; }
+        public string TradeType { get; set; }
 
-        [JsonProperty("orderType")]
-        public string Type { get; set; }
-
-        [JsonProperty("timestamp")]
+        [JsonProperty("createdTime")]
         public DateTime Timestamp { get; set; }
 
-        [JsonProperty("volume")]
-        public decimal Volume { get; set; }
+        [JsonProperty("avgExecutionPrice")]
+        public decimal AvgExecutionPrice { get; set; }
 
-        [JsonProperty("executionStatus")]
+        [JsonProperty("status")]
         public string ExecutionStatus { get; set; }
+
+        [JsonProperty("executedAmount")]
+        public decimal ExecutedVolume { get; set; }
 
         [JsonProperty("remaining_amount")]
         public decimal RemainingAmount { get; set; }

@@ -21,10 +21,10 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.RestClient
         public decimal AvgExecutionPrice { get; set; }
 
         [JsonProperty("side")]
-        public string Side { get; set; }
+        public string TradeType { get; set; }
 
         [JsonProperty("type")]
-        public string Type { get; set; }
+        public string OrderType { get; set; }
 
         [JsonProperty("timestamp")]
         public DateTime Timestamp { get; set; }
@@ -49,7 +49,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.RestClient
 
         public override string ToString()
         {
-            var str = $"New Order (Id: {Id}) Symb:{Symbol} {Side} Sz:{OriginalAmount} - Px:{Price}. (Type:{Type}, IsLive:{IsLive}, Executed Amt:{ExecutedAmount} - OrderId: {Id})" + $"(IsCancelled: {IsCancelled}, WasForced: {WasForced}, RemainingAmount: {RemainingAmount}, ExecutedAmount: {ExecutedAmount})";
+            var str = $"New Order (Id: {Id}) Symb:{Symbol} {TradeType} Sz:{OriginalAmount} - Px:{Price}. (Type:{OrderType}, IsLive:{IsLive}, Executed Amt:{ExecutedAmount} - OrderId: {Id})" + $"(IsCancelled: {IsCancelled}, WasForced: {WasForced}, RemainingAmount: {RemainingAmount}, ExecutedAmount: {ExecutedAmount})";
             return str;
         }
     }

@@ -12,10 +12,10 @@ namespace Lykke.Service.BitfinexAdapter.Models
             return new WalletBalanceModel
             {
                 Asset = wb.Currency,
-                Available = wb.Available,
+                //Available = wb.Available,
                 Balance = wb.Amount,
                 Reserved = wb.Amount - wb.Available,
-                Type = wb.Type
+                //Type = wb.Type
             };
         }
 
@@ -37,14 +37,17 @@ namespace Lykke.Service.BitfinexAdapter.Models
             return new OrderModel
             {
                 Id = o.ExchangeOrderId,
-                Type = o.OrderType,
                 Symbol = o.Instrument.Name,
-                Side = o.Side.ToString(),
-                Volume = o.Volume,
                 Price = o.Price,
-                ExecutionStatus = o.ExecutionStatus.ToString(),
-                RemainingAmount = o.RemainingVolume,
+                OriginalVolume = o.OriginalVolume,
+                TradeType = o.tradeType.ToString(),
                 Timestamp = o.Time,
+                AvgExecutionPrice = o.AvgExecutionPrice,
+                ExecutionStatus = o.ExecutionStatus.ToString(),
+                ExecutedVolume = o.ExecutedVolume,
+                RemainingAmount = o.RemainingVolume,
+                
+                
             };
         }
 
@@ -55,7 +58,7 @@ namespace Lykke.Service.BitfinexAdapter.Models
                 new Instrument(request.Instrument),
                 orderId: null,
                 command: OrderCommand.Create,
-                tradeSide: request.TradeSide,
+                tradeType: Enum.Parse<TradeType>(request.TradeType, true),
                 price: request.Price,
                 volume: request.Volume,
                 time: DateTime.UtcNow,
@@ -70,7 +73,7 @@ namespace Lykke.Service.BitfinexAdapter.Models
                 new Instrument(request.Instrument),
                 orderId: null,
                 command: OrderCommand.Create,
-                tradeSide: request.TradeSide,
+                tradeType: Enum.Parse<TradeType>(request.TradeType, true),
                 price: 0,
                 volume: request.Volume,
                 time: DateTime.UtcNow,
@@ -78,9 +81,5 @@ namespace Lykke.Service.BitfinexAdapter.Models
                 orderType: OrderType.Market
             );
         }
-
-
-
-
     }
 }

@@ -7,7 +7,7 @@ namespace Lykke.Service.BitfinexAdapter.Models.LimitOrders
         /// <summary>
         /// id of order for cancel(repalce)
         /// </summary>
-        [JsonProperty("orderIdToCancel")]
+        [JsonProperty("orderId")]
         public long OrderIdToCancel { get; set; }
     }
 }

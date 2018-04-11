@@ -9,14 +9,14 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
         [JsonConstructor]
         public TradingSignal(
             Instrument instrument,
-            string orderId, OrderCommand command, TradeSide tradeSide, decimal? price, decimal volume, bool isMarginOrder, DateTime time, OrderType orderType = OrderType.Market)
+            string orderId, OrderCommand command, TradeType tradeType, decimal? price, decimal volume, bool isMarginOrder, DateTime time, OrderType orderType = OrderType.Market)
         {
             Instrument = instrument;
 
             OrderId = orderId;
             Command = command;
 
-            TradeSide = tradeSide;
+            TradeType = tradeType;
             Price = price;
             Volume = volume;
             Time = time;
@@ -32,7 +32,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 
         public OrderType OrderType { get; }
 
-        public TradeSide TradeSide { get; }
+        public TradeType TradeType{ get; }
 
         public decimal? Price { get; }
 
@@ -44,7 +44,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 
         public override string ToString()
         {
-            return $"Id: {OrderId}, Time: {Time}, Instrument: {Instrument}, Command: {Command}, TradeSide: {TradeSide}, Price: {Price}, Count: {Volume}, OrderType: {OrderType}, IsMargin {IsMarginOrder}";
+            return $"Id: {OrderId}, Time: {Time}, Instrument: {Instrument}, Command: {Command}, TradeType: {TradeType}, Price: {Price}, Count: {Volume}, OrderType: {OrderType}, IsMargin {IsMarginOrder}";
         }
 
         public bool IsTimeInThreshold(TimeSpan threshold)

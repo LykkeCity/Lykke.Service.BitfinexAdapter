@@ -1,5 +1,4 @@
-﻿using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
 namespace Lykke.Service.BitfinexAdapter.Models.LimitOrders
@@ -16,16 +15,16 @@ namespace Lykke.Service.BitfinexAdapter.Models.LimitOrders
         /// <summary>
         /// volume of order
         /// </summary>
-        [JsonProperty("volume")]
+        [JsonProperty("amount")]
         [Required]
         public decimal Volume { get; set; }
 
         /// <summary>
         /// side of trade: Buy, Sell
         /// </summary>
-        [JsonProperty("tradeSide")]
+        [JsonProperty("tradeType")]
         [Required]
-        public TradeSide TradeSide { get; set; } //needs validation
+        public string TradeType { get; set; } //needs validation
 
 
     }
