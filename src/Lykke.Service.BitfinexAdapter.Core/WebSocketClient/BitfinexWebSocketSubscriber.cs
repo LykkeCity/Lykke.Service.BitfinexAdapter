@@ -123,7 +123,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.WebSocketClient
 
         private async Task<bool> HandleResponse(HeartbeatResponse hbResponse)
         {
-            await Log.WriteInfoAsync("Heartbeat", "Heartbeat", $"Heartbeat for channel {hbResponse.ChannelId} received");
+            //await Log.WriteInfoAsync("Heartbeat", "Heartbeat", $"Heartbeat for channel {hbResponse.ChannelId} received");
             return false;
         }
 

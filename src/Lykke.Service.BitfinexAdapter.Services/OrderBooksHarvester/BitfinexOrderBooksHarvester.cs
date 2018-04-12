@@ -178,7 +178,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 
         private async Task HandleResponse(HeartbeatResponse heartbeat)
         {
-            await Log.WriteInfoAsync(nameof(HandleResponse), $"Bitfinex channel {_channels[heartbeat.ChannelId].Pair} heartbeat", string.Empty);
+            //await Log.WriteInfoAsync(nameof(HandleResponse), $"Bitfinex channel {_channels[heartbeat.ChannelId].Pair} heartbeat", string.Empty);
         }
 
         private async Task HandleResponse(OrderBookSnapshotResponse snapshot)
