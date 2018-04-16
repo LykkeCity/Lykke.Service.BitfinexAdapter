@@ -2,6 +2,7 @@
 using Lykke.Service.BitfinexAdapter.Authentication;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using Lykke.Service.BitfinexAdapter.Models;
 using Lykke.Service.BitfinexAdapter.Models.LimitOrders;
 using Lykke.Service.BitfinexAdapter.Models.Responses;
@@ -62,14 +63,14 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> LimitOrderStatus(long orderId)
         {
-            return await GetOrder(orderId);
+            return await GetOrder(orderId, OrderType.Limit);
         }
 
-        private async Task<IActionResult> GetOrder(long orderId)
+        private async Task<IActionResult> GetOrder(long orderId, OrderType orderType = OrderType.Unknown)
         {
             try
             {
-                var order = await GetAuthenticatedExchange().GetOrder(orderId, TimeSpan.FromSeconds(DefaultTimeOutSeconds));
+                var order = await GetAuthenticatedExchange().GetOrder(orderId, TimeSpan.FromSeconds(DefaultTimeOutSeconds), orderType);
                 return Ok(order.ToApiModel());
             }
             catch (ApiException e)
@@ -96,7 +97,7 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> MarketOrderStatus(long orderId)
         {
-            return await GetOrder(orderId);
+            return await GetOrder(orderId, OrderType.Market);
         }
 
         /// <summary>

@@ -2,6 +2,7 @@
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exchange;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Models;
 using System;
@@ -84,7 +85,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public abstract Task<long> CancelOrder(long orderId, TimeSpan timeout);
 
-        public abstract Task<ExecutionReport> GetOrder(long id, TimeSpan timeout);
+        public abstract Task<ExecutionReport> GetOrder(long id, TimeSpan timeout, OrderType orderType = OrderType.Unknown);
 
         public abstract Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout);
 

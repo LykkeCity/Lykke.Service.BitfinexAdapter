@@ -7,5 +7,6 @@
         Stop,
         TrailingStop,
         FillOrKill,
+        Unknown
     }
 }

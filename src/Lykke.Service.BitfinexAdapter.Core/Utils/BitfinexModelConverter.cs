@@ -61,6 +61,36 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
             }
         }
 
+        public OrderType GetOrderTypeFromString(string orderTypeString)
+        {
+            if (String.IsNullOrWhiteSpace(orderTypeString)) return OrderType.Unknown;
+            switch (orderTypeString)
+            {
+                case "market":
+                    return OrderType.Market;
+                case "exchange market":
+                    return OrderType.Market;
+                case "limit":
+                    return OrderType.Limit;
+                case "exchange limit":
+                    return OrderType.Limit;
+                case "stop":
+                    return OrderType.Stop;
+                case "exchange stop":
+                    return OrderType.Stop;
+                case "trailing-stop":
+                    return OrderType.TrailingStop;
+                case "exchange trailing-stop":
+                    return OrderType.TrailingStop;
+                case "fill-or-kill":
+                    return OrderType.FillOrKill;
+                case "exchange fill-or-kill":
+                    return OrderType.FillOrKill;
+                default:
+                    return OrderType.Unknown;
+            }    
+        }
+
         public string ConvertToSpotOrderType(OrderType type)
         {
             switch (type)

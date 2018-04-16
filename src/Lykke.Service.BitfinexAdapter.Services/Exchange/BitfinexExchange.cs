@@ -89,7 +89,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             return (Order)response;
         }
 
-        public override async Task<ExecutionReport> GetOrder(long id, TimeSpan timeout)
+        public override async Task<ExecutionReport> GetOrder(long id, TimeSpan timeout, OrderType orderType = OrderType.Unknown)
         {
             var cts = new CancellationTokenSource(timeout);
             var response = await _exchangeApi.GetOrderStatusAsync(id, cts.Token);
@@ -98,7 +98,16 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
                 await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), nameof(GetOrder), $"Request for orderId {id} returned error from exchange: {error.Message}");
                 throw new ApiException(error.Message, error.HttpApiStatusCode);
             }
-            var trade = OrderToTrade((Order)response);
+
+            var order = (Order) response;
+
+            var orderTypeParsed = _modelConverter.GetOrderTypeFromString(order.OrderType);
+            if (orderTypeParsed != orderType && orderType != OrderType.Unknown)
+            {
+                throw new ApiException("Requested order id and type not found.", HttpStatusCode.NotFound);
+            }
+
+            var trade = OrderToTrade(order);
             return trade;
         }
 

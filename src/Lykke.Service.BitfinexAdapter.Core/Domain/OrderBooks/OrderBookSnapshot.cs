@@ -3,7 +3,6 @@ using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks
 {
@@ -66,7 +65,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks
             }
         }
 
-        public async Task<bool> DetectNegativeSpread()
+        public bool DetectNegativeSpread()
         {
             if (Asks.Any() && Bids.Any())
             {
@@ -74,7 +73,6 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks
                 var bestBid = Bids.Values.Max(ob => ob.Price);
                 if (bestAsk < bestBid)
                 {
-                    await _log.WriteInfoAsync(nameof(DetectNegativeSpread), $"ExchangeBase {Source} AssetPair {AssetPair} Ask {bestAsk} Bid {bestBid}", "Negative spread detected");
                     return true;
                 }
             }

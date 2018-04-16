@@ -218,7 +218,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
         {
             var orderBookSnapshot = new OrderBookSnapshot(Constants.BitfinexExchangeName, pair, timeStamp, Log, AdapterSettings.SupportedCurrencySymbols);
             orderBookSnapshot.AddOrUpdateOrders(orders);
-            if (await orderBookSnapshot.DetectNegativeSpread())
+            if (orderBookSnapshot.DetectNegativeSpread())
             {
                 ScheduleSnapshotRefresh();
             }
@@ -251,7 +251,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
                     throw new ArgumentOutOfRangeException(nameof(orderEventType), orderEventType, null);
             }
 
-            if (await orderBookSnapshot.DetectNegativeSpread())
+            if (orderBookSnapshot.DetectNegativeSpread())
             {
                 ScheduleSnapshotRefresh();
             }
