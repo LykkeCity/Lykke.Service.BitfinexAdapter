@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System.Collections.Generic;
 
 namespace Lykke.Service.BitfinexAdapter.Models
@@ -8,6 +9,7 @@ namespace Lykke.Service.BitfinexAdapter.Models
         [JsonProperty("errorMessage")]
         public string ErrorMessage { get; set; }
         [JsonProperty("errorCode")]
+        [JsonConverter(typeof(StringEnumConverter))]
         public ApiErrorCode ErrorCode { get; set; }
         [JsonProperty("modelErrors")]
         public Dictionary<string, List<string>> ModelErrors { get; set; }
