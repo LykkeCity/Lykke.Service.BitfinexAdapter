@@ -32,7 +32,7 @@ namespace Lykke.Service.BitfinexAdapter.Models
         [JsonProperty("executedAmount")]
         public decimal ExecutedVolume { get; set; }
 
-        [JsonProperty("remaining_amount")]
+        [JsonProperty("remainingAmount")]
         public decimal RemainingAmount { get; set; }
     }
 }

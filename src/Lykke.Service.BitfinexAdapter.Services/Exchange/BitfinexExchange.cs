@@ -291,7 +291,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             }
             if (order.IsLive)
             {
-                return OrderExecutionStatus.New;
+                return OrderExecutionStatus.Active;
             }
             return OrderExecutionStatus.Fill;
         }

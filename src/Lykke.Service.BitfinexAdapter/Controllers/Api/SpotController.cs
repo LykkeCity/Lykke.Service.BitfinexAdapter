@@ -59,8 +59,8 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("LimitOrderStatus")]
         [HttpGet("limitOrderStatus")]
         [ProducesResponseType(typeof(OrderModel), 200)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> LimitOrderStatus(long orderId)
         {
             return await GetOrder(orderId, OrderType.Limit);
@@ -75,15 +75,17 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
             }
             catch (ApiException e)
             {
+                var error = TryParseBitfinexErrorMessage(e.Message);
+
                 if (e.ApiStatusCode == HttpStatusCode.BadRequest)
                 {
-                    return BadRequest(e.Message);
+                    return BadRequest(new ErrorModel(e.Message, error));
                 }
                 if (e.ApiStatusCode == HttpStatusCode.NotFound)
                 {
-                    return NotFound();
+                    return NotFound(new ErrorModel(e.Message, ApiErrorCode.OrderNotFound));
                 }
-                return StatusCode((int)HttpStatusCode.InternalServerError);
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(String.Empty, error));
             }
         }
 
@@ -93,8 +95,8 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("MarketOrderStatus")]
         [HttpGet("marketOrderStatus")]
         [ProducesResponseType(typeof(OrderModel), 200)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> MarketOrderStatus(long orderId)
         {
             return await GetOrder(orderId, OrderType.Market);
@@ -106,8 +108,8 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("CreateLimitOrder")]
         [HttpPost("createLimitOrder")]
         [ProducesResponseType(typeof(OrderIdResponse), 200)]
-        [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> CreateLimitOrder([FromBody]LimitOrderRequest request)
         {
             try
@@ -117,11 +119,14 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
             }
             catch (ApiException ex)
             {
+                var error = TryParseBitfinexErrorMessage(ex.Message);
+
                 if (ex.ApiStatusCode == HttpStatusCode.BadRequest)
                 {
-                    return BadRequest(ex.Message);
+                    return BadRequest(new ErrorModel(ex.Message, error));
                 }
-                return StatusCode((int) HttpStatusCode.InternalServerError);
+                
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(String.Empty, error));
             }
         }
 
@@ -131,7 +136,7 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("CancelOrder")]
         [HttpPost("cancelOrder")]
         [ProducesResponseType(typeof(CancelLimitOrderResponse), 200)]
-        [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> CancelLimitOrder([FromBody]CancelLimitOrderRequest request)
         {
             try
@@ -141,24 +146,30 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
             }
             catch (ApiException e)
             {
-                if (e.ApiStatusCode == HttpStatusCode.BadRequest || e.ApiStatusCode == HttpStatusCode.NotFound)
+                var error = TryParseBitfinexErrorMessage(e.Message);
+                if ( error == ApiErrorCode.OrderNotFound || e.ApiStatusCode == HttpStatusCode.NotFound)
                 {
-                    return BadRequest(e.Message);
+                    return NotFound(new ErrorModel(e.Message, error));
                 }
-                return StatusCode((int)HttpStatusCode.InternalServerError);
+
+                if (e.ApiStatusCode == HttpStatusCode.BadRequest)
+                {
+                    return BadRequest(new ErrorModel(e.Message, error));
+                }
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(String.Empty, error));
             }
         }
 
 
         /// <summary>
-        /// Replacel limit order. Cancel one and create new. 
+        /// Replace limit order. Cancel one and create new. 
         /// </summary>
         [SwaggerOperation("ReplaceLimitOrder")]
         [HttpPost("replaceLimitOrder")]
         [ProducesResponseType(typeof(OrderIdResponse), 200)]
-        [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(string), (int)HttpStatusCode.NotFound)]
-        [ProducesResponseType((int) HttpStatusCode.InternalServerError)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorModel), (int) HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> ReplaceLimitOrder([FromBody]ReplaceLimitOrderRequest request)
         {
             try
@@ -166,17 +177,19 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
                 var result = await GetAuthenticatedExchange().AddOrderAndWaitExecution(request.ToLimitOrder(false), TimeSpan.FromSeconds(DefaultTimeOutSeconds), request.OrderIdToCancel);
                 return Ok(new OrderIdResponse {OrderId = result.ExchangeOrderId.ToString() });
             }
-            catch (ApiException ex)
+            catch (ApiException e)
             {
-                if (ex.ApiStatusCode == HttpStatusCode.BadRequest)
+                var error = TryParseBitfinexErrorMessage(e.Message);
+                if (error == ApiErrorCode.OrderNotFound || e.ApiStatusCode == HttpStatusCode.NotFound)
                 {
-                    return BadRequest(ex.Message);
+                    return NotFound(new ErrorModel(e.Message, ApiErrorCode.OrderNotFound));
                 }
-                if (ex.ApiStatusCode == HttpStatusCode.NotFound)
+
+                if (e.ApiStatusCode == HttpStatusCode.BadRequest)
                 {
-                    return NotFound(ex.Message);
+                    return BadRequest(new ErrorModel(e.Message, error));
                 }
-                return StatusCode((int)HttpStatusCode.InternalServerError);
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(String.Empty, error));
             }
         }
 
@@ -186,8 +199,8 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("CreateMarketOrder")]
         [HttpPost("createMarketOrder")]
         [ProducesResponseType(typeof(OrderIdResponse), 200)]
-        [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> CreateMarketOrder([FromBody]MarketOrderRequest request)
         {
             try
@@ -197,11 +210,12 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
             }
             catch (ApiException ex)
             {
+                var error = TryParseBitfinexErrorMessage(ex.Message);
                 if (ex.ApiStatusCode == HttpStatusCode.BadRequest)
                 {
-                    return BadRequest(ex.Message);
+                    return BadRequest(new ErrorModel(ex.Message, error));
                 }
-                return StatusCode((int)HttpStatusCode.InternalServerError);
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(String.Empty, error));
             }
         }
 

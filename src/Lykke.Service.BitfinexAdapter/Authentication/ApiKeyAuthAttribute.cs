@@ -25,7 +25,7 @@ namespace Lykke.Service.BitfinexAdapter.Authentication
 
                 if (!ClientApiKeys.ContainsKey(apiKeyFromRequest) || String.IsNullOrWhiteSpace(ClientApiKeys[apiKeyFromRequest].ApiKey) || String.IsNullOrWhiteSpace(ClientApiKeys[apiKeyFromRequest].ApiSecret))
                 {
-                    context.Result = new ObjectResult(new ErrorModel(Constants.AuthenticationError, (int)HttpStatusCode.Unauthorized))
+                    context.Result = new ObjectResult(new ErrorModel(Constants.AuthenticationError, ApiErrorCode.Unauthorized))
                     {
                         StatusCode = (int)HttpStatusCode.Unauthorized
                     }; 

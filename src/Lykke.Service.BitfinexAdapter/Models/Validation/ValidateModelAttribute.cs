@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System;
+using System.Linq;
 
 namespace Lykke.Service.BitfinexAdapter.Models.Validation
 {
@@ -9,7 +11,14 @@ namespace Lykke.Service.BitfinexAdapter.Models.Validation
         {
             if (!context.ModelState.IsValid)
             {
-                context.Result = new BadRequestObjectResult(context.ModelState);
+                var errorList = context.ModelState
+                    .Where(x => x.Value.Errors.Count > 0)
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => String.IsNullOrWhiteSpace(e.ErrorMessage) ? e.Exception.Message : e.ErrorMessage).ToList()
+                    );
+
+                context.Result = new BadRequestObjectResult(new ErrorModel(String.Empty, ApiErrorCode.InputParamValidationError, errorList));
             }
         }
     }
