@@ -4,10 +4,7 @@
     {
         Initializing,
         Connecting,
-        //ReconnectingAfterError,
         Connected,
-        ReceivingPrices,
-        ExecuteOrders,
         ErrorState,
         Stopped,
         Stopping
