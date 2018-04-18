@@ -56,7 +56,7 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
                 return ApiErrorCode.IncorrectPrice;
             if (errorMessage == "Unknown symbol")
                 return ApiErrorCode.IncorrectInstrument;
-            if (errorMessage == "Order amount must be positive." || errorMessage.Contains("Invalid order: minimum size") || errorMessage.Contains("Invalid order size"))
+            if (errorMessage == "Order amount must be positive." || errorMessage.Contains("Invalid order: minimum size") || errorMessage.Contains("Invalid order size") || errorMessage.Contains("amount should be a decimal number"))
                 return ApiErrorCode.IncorrectAmount;
             if (errorMessage.Contains("not enough exchange balance"))
                 return ApiErrorCode.NotEnoughBalance;
