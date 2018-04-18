@@ -13,12 +13,6 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks
             _hashCodeFunc = StandardGetHashCode;
         }
 
-        public OrderBookItem(Func<OrderBookItem, OrderBookItem, bool> equalFunc, Func<OrderBookItem, int> hashCodeFunc)
-        {
-            _equalFunc = equalFunc;
-            _hashCodeFunc = hashCodeFunc;
-        }
-
         public decimal Price { get; set; }
 
         public decimal Size { get; set; }
