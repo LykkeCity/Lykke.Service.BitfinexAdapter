@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using Polly;
 using System;
-using System.Linq;
+using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -92,22 +92,24 @@ namespace Lykke.Service.BitfinexAdapter.Core.WebSocketClient
             using (var cts = new CancellationTokenSource(_responseTimeout))
             using (var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken))
             {
-
                 var buffer = new byte[512];
-                var segment = new ArraySegment<byte>(buffer);
-                var sb = new StringBuilder();
-                var endOfMessage = false;
-                while (!endOfMessage)
+                using (var ms = new MemoryStream())
                 {
-                    var re = await _clientWebSocket.ReceiveAsync(segment, linkedToken.Token);
-                    if (re.MessageType == WebSocketMessageType.Close)
+                    var endOfMessage = false;
+                    while (!endOfMessage)
                     {
-                        throw new OperationCanceledException("The remote host requested connection closing");
+                        var re = await _clientWebSocket.ReceiveAsync(buffer, linkedToken.Token);
+                        if (re.MessageType == WebSocketMessageType.Close)
+                        {
+                            throw new OperationCanceledException("The remote host requested connection closing");
+                        }
+                        ms.Write(buffer, 0, re.Count);
+                        endOfMessage = re.EndOfMessage;
                     }
-                    sb.Append(DecodeText(segment.Array.Take(re.Count).ToArray()));
-                    endOfMessage = re.EndOfMessage;
+
+                    var decodedMessageString = DecodeText(ms.ToArray());
+                    return decodedMessageString;
                 }
-                return sb.ToString();
             }
         }
 
