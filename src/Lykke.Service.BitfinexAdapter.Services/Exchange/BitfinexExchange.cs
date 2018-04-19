@@ -54,9 +54,12 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             var orderType = _modelConverter.ConvertOrderType(signal.OrderType);
             var side = _modelConverter.ConvertTradeType(signal.TradeType);
             var price = signal.Price == 0 ? 1 : signal.Price ?? 1;
-            var cts = new CancellationTokenSource(timeout);
 
-            var response = await _exchangeApi.AddOrder(symbol, volume, price, side, orderType, cts.Token);
+            object response;
+            using (var cts = new CancellationTokenSource(timeout))
+            {
+                response = await _exchangeApi.AddOrder(symbol, volume, price, side, orderType, cts.Token);
+            }
 
             if (response is Error error)
             {
