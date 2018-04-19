@@ -7,6 +7,7 @@ using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
 using Lykke.Service.BitfinexAdapter.Authentication;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Core.Settings;
 using Lykke.Service.BitfinexAdapter.Models;

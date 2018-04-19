@@ -1,4 +1,4 @@
-﻿namespace Lykke.Service.BitfinexAdapter.Models
+﻿namespace Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions
 {
     public enum ApiErrorCode
     {
@@ -13,6 +13,7 @@
         IncorrectTradetype,
         IncorrectInstrument,
         IncorrectAmount,
-        Unauthorized
+        Unauthorized,
+        RateLimit
     }
 }

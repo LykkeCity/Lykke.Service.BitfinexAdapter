@@ -81,8 +81,6 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public abstract Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout, long orderIdToReplace = 0);
 
-        public abstract Task<ExecutionReport> CancelOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout);
-
         public abstract Task<long> CancelOrder(long orderId, TimeSpan timeout);
 
         public abstract Task<ExecutionReport> GetOrder(long id, TimeSpan timeout, OrderType orderType = OrderType.Unknown);
@@ -98,8 +96,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             throw new NotSupportedException();
         }
 
-        public abstract StreamingSupport StreamingSupport { get; }
-        public abstract Task<IReadOnlyList<string>> GetAllExchangeInstruments();
+        public abstract Task<IReadOnlyList<string>> GetAllExchangeInstruments(TimeSpan timeout);
 
     }
 }

@@ -39,7 +39,45 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
                 BaseUri = new Uri(configuration.EndpointUrl)
             };
         }
-        
+
+        private async Task<TResult> ExecuteApiMethod<TRequest, TResult>(Func<TRequest, CancellationToken, Task<TResult>> method, TRequest request, CancellationToken token)
+        {
+            try
+            {
+                var response = await method(request, token);
+                return response;
+            }
+            catch (ApiException ex)
+            {
+                await LykkeLog.WriteErrorAsync(nameof(BitfinexExchange), method.Method.Name, request.ToString(), ex);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                await LykkeLog.WriteErrorAsync(nameof(BitfinexExchange), method.Method.Name, request.ToString(), ex );
+                throw new ApiException(ex.Message, HttpStatusCode.InternalServerError);
+            }
+        }
+
+        private async Task<TResult> ExecuteApiMethod<TResult>(Func<CancellationToken, Task<TResult>> method, CancellationToken token)
+        {
+            try
+            {
+                var response = await method(token);
+                return response;
+            }
+            catch (ApiException ex)
+            {
+                await LykkeLog.WriteErrorAsync(nameof(BitfinexExchange), method.Method.Name, ex);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                await LykkeLog.WriteErrorAsync(nameof(BitfinexExchange), method.Method.Name, ex);
+                throw new ApiException(ex.Message, HttpStatusCode.InternalServerError);
+            }
+        }
+
         public override async Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout, long orderIdToReplace = 0)
         {
             var symbol = _modelConverter.LykkeSymbolToExchangeSymbol(signal.Instrument.Name);
@@ -47,68 +85,51 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             var orderType = signal.IsMarginOrder ? _modelConverter.ConvertToMarginOrderType(signal.OrderType) : _modelConverter.ConvertToSpotOrderType(signal.OrderType);
             var tradeType = _modelConverter.ConvertTradeType(signal.TradeType);
             var price = signal.Price == 0 ? 1 : signal.Price ?? 1;
-            var cts = new CancellationTokenSource(timeout);
 
-            var response = orderIdToReplace!=0 ? await _exchangeApi.ReplaceOrderAsync(orderIdToReplace, symbol, volume, price, tradeType, orderType, cts.Token):
-                                                 await _exchangeApi.AddOrderAsync(symbol, volume, price, tradeType, orderType, cts.Token);
-            if (response is Error error)
+            using (var cts = new CancellationTokenSource(timeout))
             {
-                await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), nameof(AddOrderAndWaitExecution), $"Request for order create returned error from exchange: {error.Message}. Order details: {signal}");
-                throw new ApiException(error.Message, error.HttpApiStatusCode); 
-            }
+                var newOrderRequest = new NewOrderRequest
+                {
+                    OrderIdToReplace = orderIdToReplace,
+                    Symbol = symbol,
+                    Аmount = volume,
+                    Price = price,
+                    Side = tradeType,
+                    Type = orderType
+                };
 
-            var trade = OrderToTrade((Order)response);
-            return trade;
-        }
+                var newOrderResponse = orderIdToReplace > 0 ? await ExecuteApiMethod(_exchangeApi.ReplaceOrderAsync, newOrderRequest, cts.Token) : 
+                                                               await ExecuteApiMethod(_exchangeApi.AddOrderAsync, newOrderRequest, cts.Token); 
 
-        public override async Task<ExecutionReport> CancelOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout)
-        {
-            if (!long.TryParse(signal.OrderId, out var id))
-            {
-                throw new ApiException("Bitfinex order id can be only integer", HttpStatusCode.BadRequest);
+                var trade = OrderToTrade(newOrderResponse);
+                return trade;
             }
-            var response = await CancelOrderById(id, timeout);
-            var trade = OrderToTrade(response);
-            return trade;
         }
 
         public override async Task<long> CancelOrder(long orderId, TimeSpan timeout)
         {
-            return (await CancelOrderById(orderId, timeout))?.Id ?? 0;
-        }
-
-
-        private async Task<Order> CancelOrderById(long orderId, TimeSpan timeout)
-        {
-            var response = await _exchangeApi.CancelOrderAsync(orderId, new CancellationTokenSource(timeout).Token);
-            if (response is Error error)
+            using (var cts = new CancellationTokenSource(timeout))
             {
-                await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), nameof(CancelOrder), $"Request for cancel orderId {orderId} returned error from exchange: {error.Message}");
-                throw new ApiException(error.Message, error.HttpApiStatusCode);
+                var response = await ExecuteApiMethod(_exchangeApi.CancelOrderAsync, orderId, cts.Token);
+                return response.Id;
             }
-            return (Order)response;
         }
 
         public override async Task<ExecutionReport> GetOrder(long id, TimeSpan timeout, OrderType orderType = OrderType.Unknown)
         {
-            var cts = new CancellationTokenSource(timeout);
-            var response = await _exchangeApi.GetOrderStatusAsync(id, cts.Token);
-            if (response is Error error)
+            using (var cts = new CancellationTokenSource(timeout))
             {
-                await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), nameof(GetOrder), $"Request for orderId {id} returned error from exchange: {error.Message}");
-                throw new ApiException(error.Message, error.HttpApiStatusCode);
+                var order = await ExecuteApiMethod(_exchangeApi.GetOrderStatusAsync, id, cts.Token);
+
+                var orderTypeParsed = _modelConverter.GetOrderTypeFromString(order.OrderType);
+                if (orderTypeParsed != orderType && orderType != OrderType.Unknown)
+                {
+                    throw new ApiException("Requested order id and type not found.", HttpStatusCode.NotFound);
+                }
+
+                var trade = OrderToTrade(order);
+                return trade;
             }
-
-            var order = (Order) response;
-
-            var orderTypeParsed = _modelConverter.GetOrderTypeFromString(order.OrderType);
-            if (orderTypeParsed != orderType && orderType != OrderType.Unknown)
-            {
-                throw new ApiException("Requested order id and type not found.", HttpStatusCode.NotFound);
-            }
-
-            var trade = OrderToTrade(order);
-            return trade;
         }
 
         public override async Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout)
@@ -121,17 +142,14 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             return await GetOrders(_exchangeApi.GetInactiveOrdersAsync, timeout);
         }
 
-        private async Task<IEnumerable<ExecutionReport>> GetOrders(Func<CancellationToken, Task<object>> apiOrdersCall, TimeSpan timeout)
+        private async Task<IEnumerable<ExecutionReport>> GetOrders(Func<CancellationToken, Task<IReadOnlyList<Order>>> apiOrdersCall, TimeSpan timeout)
         {
-            var cts = new CancellationTokenSource(timeout);
-            var response = await apiOrdersCall(cts.Token);  
-            if (response is Error error)
+            using (var cts = new CancellationTokenSource(timeout))
             {
-                await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), nameof(GetOpenOrders), $"Request for all active orders returned error from exchange: {error.Message}");
-                throw new ApiException(error.Message, error.HttpApiStatusCode);
+                var response = await ExecuteApiMethod(apiOrdersCall, cts.Token);
+                var trades = response.Select(OrderToTrade);
+                return trades;
             }
-            var trades = ((IReadOnlyCollection<Order>)response).Select(OrderToTrade);
-            return trades;
         }
 
         public override async Task<IEnumerable<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout)
@@ -156,27 +174,25 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public override async Task<IReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout)
         {
-            var cts = new CancellationTokenSource(timeout);
-            var response = await _exchangeApi.GetActivePositionsAsync(cts.Token);
-            if (response is Error error)
+            using (var cts = new CancellationTokenSource(timeout))
             {
-                throw new ApiException(error.Message, error.HttpApiStatusCode);
+                var response = await ExecuteApiMethod(_exchangeApi.GetActivePositionsAsync, cts.Token);
+
+                var marginInfo = await GetMarginInfo(timeout);
+                var positions = ExchangePositionsToPositionModel(response, marginInfo);
+                return positions;
             }
-            var marginInfo = await GetMarginInfo(timeout);
-            var positions = ExchangePositionsToPositionModel((IReadOnlyCollection<Position>)response, marginInfo);
-            return positions;
         }
 
-        public override StreamingSupport StreamingSupport => new StreamingSupport(true, true);
-        public override async Task<IReadOnlyList<string>> GetAllExchangeInstruments()
+        public override async Task<IReadOnlyList<string>> GetAllExchangeInstruments(TimeSpan timeout)
         {
-            var response = await _exchangeApi.GetAllSymbolsAsync();
-            if (response is Error error)
+            using (var cts = new CancellationTokenSource(timeout))
             {
-                throw new ApiException(error.Message, error.HttpApiStatusCode);
+                var response = await ExecuteApiMethod(_exchangeApi.GetAllSymbolsAsync, cts.Token); 
+
+                var instrumentsFromExchange = (response).Select(i => i.ToUpper()).ToList();
+                return instrumentsFromExchange;
             }
-            var instrumentsFromExchange = ((IReadOnlyList<string>)response).Select(i => i.ToUpper()).ToList();
-            return instrumentsFromExchange;
         }
 
         private IReadOnlyCollection<TradingPosition> ExchangePositionsToPositionModel(IEnumerable<Position> response, IReadOnlyList<MarginInfo> marginInfo)
@@ -185,7 +201,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             var result = response.Select(r =>
                 new TradingPosition
                 {
-                    Symbol = _modelConverter.ExchangeSymbolToLykkeInstrument(r.Symbol).Name,
+                    Symbol = r.Symbol, //_modelConverter.ExchangeSymbolToLykkeInstrument(r.Symbol).Name,
                     PositionVolume = r.Amount,
                     MaintMarginUsed = r.Amount * r.Base * marginByCurrency[r.Symbol].MarginRequirement / 100m,
                     RealisedPnL = 0, //TODO no specification,
@@ -208,27 +224,20 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public override async Task<IReadOnlyCollection<WalletBalance>> GetWalletBalances(TimeSpan timeout)
         {
-            var cts = new CancellationTokenSource(timeout);
-            var balances = await _exchangeApi.GetWalletBalancesAsync(cts.Token);
-            if (balances is Error error)
+            using (var cts = new CancellationTokenSource(timeout))
             {
-                throw new ApiException(error.Message, error.HttpApiStatusCode);
+                var balances = await ExecuteApiMethod(_exchangeApi.GetWalletBalancesAsync, cts.Token);
+                return balances;
             }
-            return (IReadOnlyList<WalletBalance>)balances;
         }
-
 
         private async Task<IReadOnlyList<MarginInfo>> GetMarginInfo(TimeSpan timeout)
         {
-            var cts = new CancellationTokenSource(timeout);
-            var response = await _exchangeApi.GetMarginInformationAsync(cts.Token);
-            if (response is Error error)
+            using (var cts = new CancellationTokenSource(timeout))
             {
-                throw new ApiException(error.Message, error.HttpApiStatusCode);
+                var response = await ExecuteApiMethod(_exchangeApi.GetMarginInformationAsync, cts.Token); 
+                return response;
             }
-            var marginInfor = (IReadOnlyList<MarginInfo>)response;
-
-            return marginInfor;
         }
 
         private static IReadOnlyCollection<MarginBalanceDomain> MarginInfoToBalance(IReadOnlyList<MarginInfo> marginInfos)
@@ -260,16 +269,13 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             var originalVolume = order.OriginalAmount;
             var tradeType = BitfinexModelConverter.ConvertTradeType(order.TradeType);
             var status = ConvertExecutionStatus(order);
-            var instr = _modelConverter.ExchangeSymbolToLykkeInstrument(order.Symbol);
 
-            return new ExecutionReport(instr, execTime, orderPrice, originalVolume, order.ExecutedAmount, tradeType, id, status, order.OrderType, order.AvgExecutionPrice)
+            return new ExecutionReport(new Instrument(order.Symbol), execTime, orderPrice, originalVolume, order.ExecutedAmount, tradeType, id, status, order.OrderType, order.AvgExecutionPrice)
             {
                 ExecType = ExecType.Trade,
                 Success = true,
                 FailureType = OrderStatusUpdateFailureType.None,
                 RemainingVolume = order.RemainingAmount,
-                
-                
             };
         }
 

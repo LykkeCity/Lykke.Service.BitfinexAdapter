@@ -1,7 +1,5 @@
 ﻿using Common.Log;
-using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
-using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient;
@@ -98,11 +96,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             if (_configuration.UseSupportedCurrencySymbolsAsFilter == false)
             {
                 var response = await _exchangeApi.GetAllSymbolsAsync(CancellationToken);
-                if (response is Error error)
-                {
-                    throw new ApiException(error.Message);
-                }
-                var instrumentsFromExchange = ((IReadOnlyList<string>)response).Select(i => i.ToUpper()).ToList();
+                var instrumentsFromExchange = (response).Select(i => i.ToUpper()).ToList();
 
                 foreach (var exchInstr in instrumentsFromExchange)
                 {

@@ -1,9 +1,11 @@
 ﻿using Lykke.Service.BitfinexAdapter.Core.Domain;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Utils
 {
@@ -21,10 +23,10 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
 
         public string LykkeSymbolToExchangeSymbol(string lykkeSymbol)
         {
-            var foundSymbol = _currencySymbols.FirstOrDefault(s => s.LykkeSymbol.Equals(lykkeSymbol, StringComparison.InvariantCultureIgnoreCase) );
+            var foundSymbol = _currencySymbols.FirstOrDefault(s => s.LykkeSymbol.Equals(lykkeSymbol, StringComparison.InvariantCultureIgnoreCase));
             if (foundSymbol == null && _useSupportedCurrencySymbolsAsFilter)
             {
-                throw new ArgumentException($"Symbol {lykkeSymbol} is not mapped to {Constants.BitfinexExchangeName} value");
+                throw new ApiException($"Symbol {lykkeSymbol} is not mapped to {Constants.BitfinexExchangeName} value", HttpStatusCode.BadRequest, ApiErrorCode.IncorrectInstrument );
             }
             return foundSymbol?.ExchangeSymbol ?? lykkeSymbol;
         }
@@ -34,8 +36,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
             var foundSymbol = _currencySymbols.FirstOrDefault(s => s.ExchangeSymbol.Equals(exchangeSymbol, StringComparison.InvariantCultureIgnoreCase) );
             if (foundSymbol == null && _useSupportedCurrencySymbolsAsFilter)
             {
-                throw new ArgumentException(
-                    $"Symbol {exchangeSymbol} in {Constants.BitfinexExchangeName} is not mapped to lykke value");
+                throw new ApiException($"Symbol {exchangeSymbol} in {Constants.BitfinexExchangeName} is not mapped to lykke value", HttpStatusCode.InternalServerError, ApiErrorCode.IncorrectInstrument);
             }
             return new Instrument(foundSymbol?.LykkeSymbol ?? exchangeSymbol);
         }

@@ -1,4 +1,5 @@
 ﻿using Lykke.Service.BitfinexAdapter.Core.Domain;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Settings.ServiceSettings;
 using Lykke.Service.BitfinexAdapter.Models;
 using Microsoft.AspNetCore.Mvc;

@@ -29,9 +29,17 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("GetWalletBalances")]
         [HttpGet("getWallets")]
         [ProducesResponseType(typeof(GetWalletsResponse), 200)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetWalletBalances()
         {
-            return Ok(new GetWalletsResponse { Wallets = (await GetAuthenticatedExchange().GetWalletBalances(TimeSpan.FromSeconds(DefaultTimeOutSeconds))).Select(m => m.ToApiModel()) }  );
+            try
+            {
+                return Ok(new GetWalletsResponse { Wallets = (await GetAuthenticatedExchange().GetWalletBalances(TimeSpan.FromSeconds(DefaultTimeOutSeconds))).Select(m => m.ToApiModel()) });
+            }
+            catch (ApiException e)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(e.Message, e.ErrorCode));
+            }
         }
 
         /// <summary>
@@ -40,17 +48,25 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("GetLimitOrders")]
         [HttpGet("getLimitOrders")]
         [ProducesResponseType(typeof(GetLimitOrdersResponse), 200)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetLimitOrders(string orderIds, string instruments)
         {
-            var orderIdsParsed = orderIds?.Split(",").Select(s =>
+            try
             {
-                if (long.TryParse(s.Trim(), out var parsed)) { return parsed; }
-                return 0;
-            }).Where(s => s != 0).ToList();
+                var orderIdsParsed = orderIds?.Split(",").Select(s =>
+                {
+                    if (long.TryParse(s.Trim(), out var parsed)) { return parsed; }
+                    return 0;
+                }).Where(s => s != 0).ToList();
 
 
-            var orders = await GetAuthenticatedExchange().GetLimitOrders(instruments?.Split(",").Select(s => s.Trim()).ToList(), orderIdsParsed, false, TimeSpan.FromSeconds(DefaultTimeOutSeconds));
-            return Ok(new GetLimitOrdersResponse {Orders = orders.Select(s => s.ToApiModel()).ToList() });
+                var orders = await GetAuthenticatedExchange().GetLimitOrders(instruments?.Split(",").Select(s => s.Trim()).ToList(), orderIdsParsed, false, TimeSpan.FromSeconds(DefaultTimeOutSeconds));
+                return Ok(new GetLimitOrdersResponse { Orders = orders.Select(s => s.ToApiModel()).ToList() });
+            }
+            catch (ApiException e)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(e.Message, e.ErrorCode));
+            }
         }
 
         /// <summary>
@@ -75,17 +91,15 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
             }
             catch (ApiException e)
             {
-                var error = TryParseBitfinexErrorMessage(e.Message);
-
                 if (e.ApiStatusCode == HttpStatusCode.BadRequest)
                 {
-                    return BadRequest(new ErrorModel(e.Message, error));
+                    return BadRequest(new ErrorModel(e.Message, e.ErrorCode));
                 }
                 if (e.ApiStatusCode == HttpStatusCode.NotFound)
                 {
                     return NotFound(new ErrorModel(e.Message, ApiErrorCode.OrderNotFound));
                 }
-                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(String.Empty, error));
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(e.Message, e.ErrorCode));
             }
         }
 
@@ -119,14 +133,12 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
             }
             catch (ApiException ex)
             {
-                var error = TryParseBitfinexErrorMessage(ex.Message);
-
                 if (ex.ApiStatusCode == HttpStatusCode.BadRequest)
                 {
-                    return BadRequest(new ErrorModel(ex.Message, error));
+                    return BadRequest(new ErrorModel(ex.Message, ex.ErrorCode));
                 }
                 
-                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(String.Empty, error));
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(ex.Message, ex.ErrorCode));
             }
         }
 
@@ -146,17 +158,16 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
             }
             catch (ApiException e)
             {
-                var error = TryParseBitfinexErrorMessage(e.Message);
-                if ( error == ApiErrorCode.OrderNotFound || e.ApiStatusCode == HttpStatusCode.NotFound)
+                if (e.ErrorCode == ApiErrorCode.OrderNotFound || e.ApiStatusCode == HttpStatusCode.NotFound)
                 {
-                    return NotFound(new ErrorModel(e.Message, error));
+                    return NotFound(new ErrorModel(e.Message, e.ErrorCode));
                 }
 
                 if (e.ApiStatusCode == HttpStatusCode.BadRequest)
                 {
-                    return BadRequest(new ErrorModel(e.Message, error));
+                    return BadRequest(new ErrorModel(e.Message, e.ErrorCode));
                 }
-                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(String.Empty, error));
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(e.Message, e.ErrorCode));
             }
         }
 
@@ -179,17 +190,16 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
             }
             catch (ApiException e)
             {
-                var error = TryParseBitfinexErrorMessage(e.Message);
-                if (error == ApiErrorCode.OrderNotFound || e.ApiStatusCode == HttpStatusCode.NotFound)
+                if (e.ErrorCode == ApiErrorCode.OrderNotFound || e.ApiStatusCode == HttpStatusCode.NotFound)
                 {
                     return NotFound(new ErrorModel(e.Message, ApiErrorCode.OrderNotFound));
                 }
 
                 if (e.ApiStatusCode == HttpStatusCode.BadRequest)
                 {
-                    return BadRequest(new ErrorModel(e.Message, error));
+                    return BadRequest(new ErrorModel(e.Message, e.ErrorCode));
                 }
-                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(String.Empty, error));
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(e.Message, e.ErrorCode));
             }
         }
 
@@ -210,12 +220,11 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
             }
             catch (ApiException ex)
             {
-                var error = TryParseBitfinexErrorMessage(ex.Message);
                 if (ex.ApiStatusCode == HttpStatusCode.BadRequest)
                 {
-                    return BadRequest(new ErrorModel(ex.Message, error));
+                    return BadRequest(new ErrorModel(ex.Message, ex.ErrorCode));
                 }
-                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(String.Empty, error));
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(ex.Message, ex.ErrorCode));
             }
         }
 
@@ -225,10 +234,18 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("GetOrdersHistory")]
         [HttpGet("getOrdersHistory")]
         [ProducesResponseType(typeof(GetOrdersHistoryResponse), 200)]
+        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetOrdersHistory()
         {
-            var orders = await GetAuthenticatedExchange().GetOrdersHistory(TimeSpan.FromSeconds(DefaultTimeOutSeconds));
-            return Ok( new GetOrdersHistoryResponse {Orders = orders.Select(s => s.ToApiModel()).ToList()});
+            try
+            {
+                var orders = await GetAuthenticatedExchange().GetOrdersHistory(TimeSpan.FromSeconds(DefaultTimeOutSeconds));
+                return Ok(new GetOrdersHistoryResponse { Orders = orders.Select(s => s.ToApiModel()).ToList() });
+            }
+            catch (ApiException e)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(e.Message, e.ErrorCode));
+            }
         }
     }
 }
