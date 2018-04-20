@@ -86,7 +86,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             var orderType = signal.IsMarginOrder ? _modelConverter.ConvertToMarginOrderType(signal.OrderType) : _modelConverter.ConvertToSpotOrderType(signal.OrderType);
             var tradeType = _modelConverter.ConvertTradeType(signal.TradeType);
             var price = signal.Price == 0 ? 1 : signal.Price ?? 1;
-
+            
             using (var cts = new CancellationTokenSource(timeout))
             {
                 var newOrderRequest = new NewOrderRequest
@@ -99,7 +99,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
                     Type = orderType
                 };
 
-                var newOrderResponse = orderIdToReplace > 0 ? await ExecuteApiMethod(_exchangeApi.ReplaceOrderAsync, newOrderRequest, cts.Token) : 
+                var newOrderResponse = orderIdToReplace > 0 ?  await ExecuteApiMethod(_exchangeApi.ReplaceOrderAsync, newOrderRequest, cts.Token) : 
                                                                await ExecuteApiMethod(_exchangeApi.AddOrderAsync, newOrderRequest, cts.Token); 
 
                 var trade = OrderToTrade(newOrderResponse);
