@@ -11,6 +11,7 @@ using Lykke.Service.BitfinexAdapter.Core.Utils;
 using Lykke.Service.BitfinexAdapter.Models;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -132,32 +133,32 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             }
         }
 
-        public override async Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout)
+        public override async Task<ReadOnlyCollection<ExecutionReport>> GetOpenOrders(TimeSpan timeout)
         {
-            return await GetOrders(_exchangeApi.GetActiveOrdersAsync,timeout);
+            return (await GetOrders(_exchangeApi.GetActiveOrdersAsync,timeout)).ToList().AsReadOnly();
         }
 
-        public override async Task<IEnumerable<ExecutionReport>> GetOrdersHistory(TimeSpan timeout)
+        public override async Task<ReadOnlyCollection<ExecutionReport>> GetOrdersHistory(TimeSpan timeout)
         {
-            return await GetOrders(_exchangeApi.GetInactiveOrdersAsync, timeout);
+            return (await GetOrders(_exchangeApi.GetInactiveOrdersAsync, timeout)).ToList().AsReadOnly();
         }
 
-        private async Task<IEnumerable<ExecutionReport>> GetOrders(Func<CancellationToken, Task<IReadOnlyList<Order>>> apiOrdersCall, TimeSpan timeout)
+        private async Task<IEnumerable<ExecutionReport>> GetOrders(Func<CancellationToken, Task<ReadOnlyCollection<Order>>> apiOrdersCall, TimeSpan timeout)
         {
             using (var cts = new CancellationTokenSource(timeout))
             {
                 var response = await ExecuteApiMethod(apiOrdersCall, cts.Token);
-                var trades = response.Select(OrderToTrade);
+                var trades = response.Select(OrderToTrade); 
                 return trades;
             }
         }
 
-        public override async Task<IEnumerable<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout)
+        public override async Task<ReadOnlyCollection<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout)
         {
             var orders = await GetOrders(_exchangeApi.GetActiveOrdersAsync, timeout); 
 
-            orders = isMarginRequest ? orders.Where(o => o.OrderType.Equals(_modelConverter.ConvertToMarginOrderType(OrderType.Limit), StringComparison.InvariantCultureIgnoreCase)) : 
-                                       orders.Where(o => o.OrderType.Equals(_modelConverter.ConvertToSpotOrderType(OrderType.Limit), StringComparison.InvariantCultureIgnoreCase));
+            orders = (isMarginRequest ? orders.Where(o => o.OrderType.Equals(_modelConverter.ConvertToMarginOrderType(OrderType.Limit), StringComparison.InvariantCultureIgnoreCase)) : 
+                                       orders.Where(o => o.OrderType.Equals(_modelConverter.ConvertToSpotOrderType(OrderType.Limit), StringComparison.InvariantCultureIgnoreCase))).ToList();
 
             if (!orderIdFilter.IsNullOrEmpty())
             {
@@ -169,10 +170,10 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
                 orders = orders.Where(o => instrumentsFilter.Any(i=>i.Equals(o.Instrument.Name, StringComparison.InvariantCultureIgnoreCase)));
             }
 
-            return orders;
+            return new ReadOnlyCollection<ExecutionReport>(orders.ToList());
         }
 
-        public override async Task<IReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout)
+        public override async Task<ReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout)
         {
             using (var cts = new CancellationTokenSource(timeout))
             {
@@ -180,17 +181,17 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
                 var marginInfo = await GetMarginInfo(timeout);
                 var positions = ExchangePositionsToPositionModel(response, marginInfo);
-                return positions;
+                return positions.ToList().AsReadOnly();
             }
         }
 
-        public override async Task<IReadOnlyList<string>> GetAllExchangeInstruments(TimeSpan timeout)
+        public override async Task<ReadOnlyCollection<string>> GetAllExchangeInstruments(TimeSpan timeout)
         {
             using (var cts = new CancellationTokenSource(timeout))
             {
                 var response = await ExecuteApiMethod(_exchangeApi.GetAllSymbolsAsync, cts.Token); 
 
-                var instrumentsFromExchange = (response).Select(i => i.ToUpper()).ToList();
+                var instrumentsFromExchange = (response).Select(i => i.ToUpper()).ToList().AsReadOnly();
                 return instrumentsFromExchange;
             }
         }
@@ -215,14 +216,14 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             return result.ToArray();
         }
 
-        public override async Task<IReadOnlyCollection<MarginBalanceDomain>> GetMarginBalances(TimeSpan timeout)
+        public override async Task<ReadOnlyCollection<MarginBalanceDomain>> GetMarginBalances(TimeSpan timeout)
         {
             var marginInfor = await GetMarginInfo(timeout);
             var result = MarginInfoToBalance(marginInfor);
-            return result;
+            return result.ToList().AsReadOnly();
         }
 
-        public override async Task<IReadOnlyCollection<WalletBalance>> GetWalletBalances(TimeSpan timeout)
+        public override async Task<ReadOnlyCollection<WalletBalance>> GetWalletBalances(TimeSpan timeout)
         {
             using (var cts = new CancellationTokenSource(timeout))
             {
@@ -231,7 +232,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             }
         }
 
-        private async Task<IReadOnlyList<MarginInfo>> GetMarginInfo(TimeSpan timeout)
+        private async Task<ReadOnlyCollection<MarginInfo>> GetMarginInfo(TimeSpan timeout)
         {
             using (var cts = new CancellationTokenSource(timeout))
             {

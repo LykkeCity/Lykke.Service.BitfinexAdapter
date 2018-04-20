@@ -7,6 +7,7 @@ using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Models;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -75,9 +76,9 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             Stopped?.Invoke();
         }
 
-        public abstract Task<IReadOnlyCollection<WalletBalance>> GetWalletBalances(TimeSpan timeout);
+        public abstract Task<ReadOnlyCollection<WalletBalance>> GetWalletBalances(TimeSpan timeout);
 
-        public abstract Task<IReadOnlyCollection<MarginBalanceDomain>> GetMarginBalances(TimeSpan timeout);
+        public abstract Task<ReadOnlyCollection<MarginBalanceDomain>> GetMarginBalances(TimeSpan timeout);
 
         public abstract Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout, long orderIdToReplace = 0);
 
@@ -85,18 +86,18 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public abstract Task<ExecutionReport> GetOrder(long id, TimeSpan timeout, OrderType orderType = OrderType.Unknown);
 
-        public abstract Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout);
+        public abstract Task<ReadOnlyCollection<ExecutionReport>> GetOpenOrders(TimeSpan timeout);
 
-        public abstract Task<IEnumerable<ExecutionReport>> GetOrdersHistory(TimeSpan timeout);
+        public abstract Task<ReadOnlyCollection<ExecutionReport>> GetOrdersHistory(TimeSpan timeout);
 
-        public abstract Task<IEnumerable<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout);
+        public abstract Task<ReadOnlyCollection<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout);
 
-        public virtual Task<IReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout)
+        public virtual Task<ReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout)
         {
             throw new NotSupportedException();
         }
 
-        public abstract Task<IReadOnlyList<string>> GetAllExchangeInstruments(TimeSpan timeout);
+        public abstract Task<ReadOnlyCollection<string>> GetAllExchangeInstruments(TimeSpan timeout);
 
     }
 }

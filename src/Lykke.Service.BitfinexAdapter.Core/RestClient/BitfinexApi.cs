@@ -9,6 +9,7 @@ using Microsoft.Rest.Serialization;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Net.Http;
 using System.Text;
@@ -145,7 +146,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             return response;
         }
 
-        public async Task<IReadOnlyList<Order>> GetActiveOrdersAsync(CancellationToken cancellationToken = default)
+        public async Task<ReadOnlyCollection<Order>> GetActiveOrdersAsync(CancellationToken cancellationToken = default)
         {
             var activeOrdersPost = new BitfinexPostBase
             {
@@ -153,12 +154,12 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
                 Nonce = UnixTimeConverter.UnixTimeStampUtc().ToString()
             };
 
-            var response = await GetRestResponse<IReadOnlyList<Order>>(activeOrdersPost, cancellationToken);
+            var response = await GetRestResponse<ReadOnlyCollection<Order>>(activeOrdersPost, cancellationToken);
 
             return response;
         }
 
-        public async Task<IReadOnlyList<Order>> GetInactiveOrdersAsync(CancellationToken cancellationToken = default)
+        public async Task<ReadOnlyCollection<Order>> GetInactiveOrdersAsync(CancellationToken cancellationToken = default)
         {
             var inactiveOrdersPost = new BitfinexPostBase
             {
@@ -166,7 +167,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
                 Nonce = UnixTimeConverter.UnixTimeStampUtc().ToString()
             };
 
-            var response = await GetRestResponse<IReadOnlyList<Order>>(inactiveOrdersPost, cancellationToken);
+            var response = await GetRestResponse<ReadOnlyCollection<Order>>(inactiveOrdersPost, cancellationToken);
 
             return response;
         }
@@ -187,18 +188,18 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         }
 
 
-        public async Task<IReadOnlyList<WalletBalance>> GetWalletBalancesAsync(CancellationToken cancellationToken = default)
+        public async Task<ReadOnlyCollection<WalletBalance>> GetWalletBalancesAsync(CancellationToken cancellationToken = default)
         {
             var balancePost = new BitfinexPostBase();
             balancePost.Request = BalanceRequestUrl;
             balancePost.Nonce = UnixTimeConverter.UnixTimeStampUtc().ToString();
 
-            var response = await GetRestResponse<IReadOnlyList<WalletBalance>>(balancePost, cancellationToken);
+            var response = await GetRestResponse<ReadOnlyCollection<WalletBalance>>(balancePost, cancellationToken);
 
             return response;
         }
 
-        public async Task<IReadOnlyList<MarginInfo>> GetMarginInformationAsync(CancellationToken cancellationToken = default)
+        public async Task<ReadOnlyCollection<MarginInfo>> GetMarginInformationAsync(CancellationToken cancellationToken = default)
         {
             var marginPost = new BitfinexPostBase
             {
@@ -207,12 +208,12 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             };
 
 
-            var response = await GetRestResponse<IReadOnlyList<MarginInfo>>(marginPost, cancellationToken);
+            var response = await GetRestResponse<ReadOnlyCollection<MarginInfo>>(marginPost, cancellationToken);
 
             return response;
         }
 
-        public async Task<IReadOnlyList<Position>> GetActivePositionsAsync(CancellationToken cancellationToken = default)
+        public async Task<ReadOnlyCollection<Position>> GetActivePositionsAsync(CancellationToken cancellationToken = default)
         {
             var activePositionsPost = new BitfinexPostBase
             {
@@ -220,14 +221,14 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
                 Nonce = UnixTimeConverter.UnixTimeStampUtc().ToString()
             };
 
-            var response = await GetRestResponse<IReadOnlyList<Position>>(activePositionsPost, cancellationToken);
+            var response = await GetRestResponse<ReadOnlyCollection<Position>>(activePositionsPost, cancellationToken);
 
             return response;
         }
 
-        public async Task<IReadOnlyList<string>> GetAllSymbolsAsync(CancellationToken cancellationToken = default)
+        public async Task<ReadOnlyCollection<string>> GetAllSymbolsAsync(CancellationToken cancellationToken = default)
         {
-            var response = await GetRestResponse<IReadOnlyList<string>>(new BitfinexGetBase { Request = AllSymbolsRequestUrl }, cancellationToken);
+            var response = await GetRestResponse<ReadOnlyCollection<string>>(new BitfinexGetBase { Request = AllSymbolsRequestUrl }, cancellationToken);
 
             return response;
         }

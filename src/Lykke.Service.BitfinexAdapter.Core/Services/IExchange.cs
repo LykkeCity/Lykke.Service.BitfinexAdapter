@@ -4,6 +4,7 @@ using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using Lykke.Service.BitfinexAdapter.Models;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Services
@@ -16,9 +17,9 @@ namespace Lykke.Service.BitfinexAdapter.Core.Services
 
         IReadOnlyList<Instrument> Instruments { get; }
 
-        Task<IReadOnlyCollection<MarginBalanceDomain>> GetMarginBalances(TimeSpan timeout);
+        Task<ReadOnlyCollection<MarginBalanceDomain>> GetMarginBalances(TimeSpan timeout);
 
-        Task<IReadOnlyCollection<WalletBalance>> GetWalletBalances(TimeSpan timeout);
+        Task<ReadOnlyCollection<WalletBalance>> GetWalletBalances(TimeSpan timeout);
 
         Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout, long orderIdToReplace = 0);
 
@@ -26,15 +27,15 @@ namespace Lykke.Service.BitfinexAdapter.Core.Services
 
         Task<ExecutionReport> GetOrder(long id, TimeSpan timeout, OrderType orderType = OrderType.Unknown);
 
-        Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout);
+        Task<ReadOnlyCollection<ExecutionReport>> GetOpenOrders(TimeSpan timeout);
 
-        Task<IEnumerable<ExecutionReport>> GetOrdersHistory(TimeSpan timeout);
+        Task<ReadOnlyCollection<ExecutionReport>> GetOrdersHistory(TimeSpan timeout);
 
-        Task<IEnumerable<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout);
+        Task<ReadOnlyCollection<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout);
 
-        Task<IReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout);
+        Task<ReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout);
 
-        Task<IReadOnlyList<string>> GetAllExchangeInstruments(TimeSpan timeout);
+        Task<ReadOnlyCollection<string>> GetAllExchangeInstruments(TimeSpan timeout);
 
 
 

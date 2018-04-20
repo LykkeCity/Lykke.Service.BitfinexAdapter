@@ -24,7 +24,7 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [ProducesResponseType(typeof(IEnumerable<string>), 200)]
         public async Task<IActionResult> GetSupportedInstruments()
         {
-            return Ok(_configuration.UseSupportedCurrencySymbolsAsFilter ? _configuration.SupportedCurrencySymbols.Select(s => s.ExchangeSymbol).ToList() : await GetUnAuthenticatedExchange().GetAllExchangeInstruments(TimeSpan.FromSeconds(DefaultTimeOutSeconds)));
+            return Ok(_configuration.UseSupportedCurrencySymbolsAsFilter ? _configuration.SupportedCurrencySymbols.Select(s => s.ExchangeSymbol).ToList() : (await GetUnAuthenticatedExchange().GetAllExchangeInstruments(TimeSpan.FromSeconds(DefaultTimeOutSeconds)) ).ToList() );
         }
     }
 }
