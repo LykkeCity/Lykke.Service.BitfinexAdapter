@@ -1,7 +1,7 @@
-﻿using Lykke.Service.BitfinexAdapter.Settings.ServiceSettings;
-using Lykke.Service.BitfinexAdapter.Settings.SlackNotifications;
+﻿using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
+using Lykke.Service.BitfinexAdapter.Core.Settings.SlackNotifications;
 
-namespace Lykke.Service.BitfinexAdapter.Settings
+namespace Lykke.Service.BitfinexAdapter.Core.Settings
 {
     public class AppSettings
     {
