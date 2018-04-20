@@ -1,14 +1,17 @@
-﻿using System;
-using System.Threading.Tasks;
-using Autofac;
+﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
 using Common.Log;
+using FluentValidation.AspNetCore;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
+using Lykke.Service.BitfinexAdapter.Authentication;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Services;
-using Lykke.Service.BitfinexAdapter.Settings;
+using Lykke.Service.BitfinexAdapter.Core.Settings;
+using Lykke.Service.BitfinexAdapter.Models;
+using Lykke.Service.BitfinexAdapter.Models.Validation;
 using Lykke.Service.BitfinexAdapter.Modules;
 using Lykke.SettingsReader;
 using Lykke.SlackNotification.AzureQueue;
@@ -16,6 +19,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter
 {
@@ -40,7 +45,11 @@ namespace Lykke.Service.BitfinexAdapter
         {
             try
             {
-                services.AddMvc()
+                services.AddMvc(options =>
+                    {
+                        options.Filters.Add<ValidateModelAttribute>();
+                    })
+                    .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Startup>())
                     .AddJsonOptions(options =>
                     {
                         options.SerializerSettings.ContractResolver =
@@ -50,6 +59,7 @@ namespace Lykke.Service.BitfinexAdapter
                 services.AddSwaggerGen(options =>
                 {
                     options.DefaultLykkeConfiguration("v1", "BitfinexAdapter API");
+                    options.OperationFilter<SwaggerXApiHeader>();
                 });
 
                 var builder = new ContainerBuilder();
@@ -57,7 +67,9 @@ namespace Lykke.Service.BitfinexAdapter
 
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x.BitfinexAdapterService), Log));
+                ApiKeyAuthAttribute.ClientApiKeys = appSettings.CurrentValue.BitfinexAdapterService.Credentials;
+
+                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x), Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 
@@ -80,7 +92,11 @@ namespace Lykke.Service.BitfinexAdapter
                 }
 
                 app.UseLykkeForwardedHeaders();
-                app.UseLykkeMiddleware("BitfinexAdapter", ex => new { Message = "Technical problem" });
+                app.UseLykkeMiddleware("BitfinexAdapter",
+                    ex =>
+                    {
+                        return new ErrorModel("Technical problem", ApiErrorCode.InternalServerError);
+                    });
 
                 app.UseMvc();
                 app.UseSwagger(c =>
@@ -176,7 +192,7 @@ namespace Lykke.Service.BitfinexAdapter
 
             if (string.IsNullOrEmpty(dbLogConnectionString))
             {
-                consoleLogger.WriteWarningAsync(nameof(Startup), nameof(CreateLogWithSlack), "Table loggger is not inited").Wait();
+                consoleLogger.WriteWarningAsync(nameof(Startup), nameof(CreateLogWithSlack), "Table loggger is not initiated").Wait();
                 return aggregateLogger;
             }
 
