@@ -50,7 +50,6 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks
                         order.Price = storedOrder.Price;
                     }
 
-                    InvertSize(order);
                     Bids[order.Id] = order;
                 }
                 else
@@ -59,7 +58,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks
                     {
                         order.Price = storedOrder.Price;
                     }
-                    InvertSize(order);
+
                     Asks[order.Id] = order;
                 }
             }
@@ -78,14 +77,6 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks
             }
 
             return false;
-        }
-
-        private void InvertSize(OrderBookItem order)
-        {
-            if (_invertedAssetIds.Contains(order.Symbol))
-            {
-                order.Size = order.Size / order.Price;
-            }
         }
 
         public void DeleteOrders(IEnumerable<OrderBookItem> orders)
