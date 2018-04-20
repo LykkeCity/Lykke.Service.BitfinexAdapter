@@ -5,42 +5,34 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 {
     public class TickPrice
     {
-        public TickPrice(Instrument instrument, DateTime time, decimal mid)
-        {
-            Instrument = instrument;
-
-            Time = time;
-            Ask = mid;
-            Bid = mid;
-            Mid = mid;
-        }
-
         [JsonConstructor]
         public TickPrice(Instrument instrument, DateTime time, decimal ask, decimal bid)
         {
-            Instrument = instrument;
+            Asset = instrument.Name;
 
             Time = time;
             Ask = ask;
             Bid = bid;
-
-            Mid = (ask + bid) / 2m;
         }
 
-        public Instrument Instrument { get; }
+        [JsonProperty("source")]
+        public readonly string Source = Constants.BitfinexExchangeName;
 
+        [JsonProperty("asset")]
+        public string Asset { get; }
+
+        [JsonProperty("timestamp")]
         public DateTime Time { get; }
 
+        [JsonProperty("ask")]
         public decimal Ask { get; }
 
+        [JsonProperty("bid")]
         public decimal Bid { get; }
-
-        [JsonIgnore]
-        public decimal Mid { get; }
 
         public override string ToString()
         {
-            return $"TickPrice for {Instrument}: Time={Time}, Ask={Ask}, Bid={Bid}, Mid={Mid}";
+            return $"TickPrice for {Asset}: Time={Time}, Ask={Ask}, Bid={Bid}";
         }
     }
 }
