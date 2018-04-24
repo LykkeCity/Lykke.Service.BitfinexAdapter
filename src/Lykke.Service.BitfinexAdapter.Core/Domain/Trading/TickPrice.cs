@@ -10,7 +10,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
         {
             Asset = instrument.Name;
 
-            Time = time;
+            Timestamp = time;
             Ask = ask;
             Bid = bid;
         }
@@ -22,7 +22,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
         public string Asset { get; }
 
         [JsonProperty("timestamp")]
-        public DateTime Time { get; }
+        public DateTime Timestamp { get; }
 
         [JsonProperty("ask")]
         public decimal Ask { get; }
@@ -32,7 +32,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 
         public override string ToString()
         {
-            return $"TickPrice for {Asset}: Time={Time}, Ask={Ask}, Bid={Bid}";
+            return $"TickPrice for {Asset}: Time={Timestamp}, Ask={Ask}, Bid={Bid}";
         }
     }
 }
