@@ -4,6 +4,7 @@ using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Services.ExecutionHarvester;
 using Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester;
+using System;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter.Services
@@ -36,16 +37,19 @@ namespace Lykke.Service.BitfinexAdapter.Services
             _orderBooksHarvester.Start();
             await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), $"{nameof(BitfinexOrderBooksHarvester)} started.");
 
-            foreach (var clientApiKeyCredentials in _settings.Credentials)
+            if (_settings.RabbitMq.Trades.Enabled) //subscribe to order execution only if trades publishing is enabled
             {
-                var executionHarvester = _container.IsRegisteredWithName<BitfinexExecutionHarvester>(clientApiKeyCredentials.Key) ? _container.ResolveNamed<BitfinexExecutionHarvester>(clientApiKeyCredentials.Key) : null;
-                if (executionHarvester != null)
+                foreach (var clientApiKeySecret in _settings.Credentials)
                 {
-                    executionHarvester.Start();
-                    await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), $"{nameof(BitfinexExecutionHarvester)} started for client api key {clientApiKeyCredentials.Key}");
+                    if (!String.IsNullOrWhiteSpace(clientApiKeySecret.Value.ApiKey) && !String.IsNullOrWhiteSpace(clientApiKeySecret.Value.ApiSecret) && _container.IsRegisteredWithName<BitfinexExecutionHarvester>(clientApiKeySecret.Value.ApiKey))
+                    {
+                        var harvester = _container.ResolveNamed<BitfinexExecutionHarvester>(clientApiKeySecret.Value.ApiKey);
+                        harvester.Start();
+                        await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), $"{nameof(BitfinexExecutionHarvester)} started for client api key {clientApiKeySecret.Value.ApiKey}");
+                    }
                 }
             }
-
+            
             await Task.CompletedTask;
         }
     }

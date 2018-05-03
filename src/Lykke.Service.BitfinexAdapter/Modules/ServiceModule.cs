@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Common;
 using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
@@ -59,7 +60,10 @@ namespace Lykke.Service.BitfinexAdapter.Modules
 
             builder.RegisterGeneric(typeof(RabbitMqHandler<>));
 
-            builder.RegisterType<BitfinexOrderBooksHarvester>().SingleInstance();
+            builder.RegisterType<BitfinexOrderBooksHarvester>()
+                .AsSelf()
+                .As<IStopable>()
+                .SingleInstance();
 
             builder.RegisterType<BitfinexModelConverter>().SingleInstance();
 
@@ -93,8 +97,11 @@ namespace Lykke.Service.BitfinexAdapter.Modules
                 if (!String.IsNullOrWhiteSpace(clientApiKeySecret.Value.ApiKey) && !String.IsNullOrWhiteSpace(clientApiKeySecret.Value.ApiSecret))
                 {
                     var socketSubscriber = new BitfinexWebSocketSubscriber(_settings.CurrentValue.BitfinexAdapterService, true, _log, clientApiKeySecret.Value.ApiKey, clientApiKeySecret.Value.ApiSecret);
-
-                   builder.RegisterType<BitfinexExecutionHarvester>().WithParameter("socketSubscriber", socketSubscriber).Named<BitfinexExecutionHarvester>(clientApiKeySecret.Key).SingleInstance();
+                    builder.RegisterType<BitfinexExecutionHarvester>()
+                        .AsSelf()
+                        .As<IStopable>()
+                        .WithParameter("socketSubscriber", socketSubscriber)
+                        .Named<BitfinexExecutionHarvester>(clientApiKeySecret.Value.ApiKey).SingleInstance();
                 }
             }
         }

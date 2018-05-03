@@ -96,9 +96,10 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             {
                 var msgInSec = _lastSecPublicationsNum / period;
                 var pubInSec = _totalOrderbooksPublishedToRabbit / period;
-                await Log.WriteInfoAsync(nameof(OrderBooksHarvesterBase),
-                    $"Receive rate from {Constants.BitfinexExchangeName} {msgInSec} per second, publish rate to " +
-                    $"RabbitMq {pubInSec} per second.", string.Empty);
+                await Log.WriteInfoAsync(
+                    nameof(OrderBooksHarvesterBase), 
+                    nameof(Measure),
+                    $"Receive rate from {Constants.BitfinexExchangeName} {msgInSec} per second, publish rate to RabbitMq {pubInSec} per second.");
                 _lastSecPublicationsNum = 0;
                 _totalOrderbooksPublishedToRabbit = 0;
                 await Task.Delay(TimeSpan.FromSeconds(period), CancellationToken).ConfigureAwait(false);

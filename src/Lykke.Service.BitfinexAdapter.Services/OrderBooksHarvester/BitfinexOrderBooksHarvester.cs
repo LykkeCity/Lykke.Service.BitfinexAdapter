@@ -1,4 +1,5 @@
-﻿using Common.Log;
+﻿using Common;
+using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
@@ -15,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 {
-    public sealed class BitfinexOrderBooksHarvester : OrderBooksWebSocketHarvester<object, string>
+    public sealed class BitfinexOrderBooksHarvester : OrderBooksWebSocketHarvester<object, string>, IStopable
     {
         private readonly BitfinexAdapterSettings _configuration;
         private readonly Dictionary<long, Channel> _channels;

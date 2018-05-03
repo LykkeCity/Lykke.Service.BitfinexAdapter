@@ -1,5 +1,4 @@
-﻿using Autofac;
-using Common;
+﻿using Common;
 using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient;
@@ -10,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter.Services.ExecutionHarvester
 {
-    public sealed class BitfinexExecutionHarvester : IStartable, IStopable
+    public sealed class BitfinexExecutionHarvester : IStopable
     {
         private readonly IBitfinexWebSocketSubscriber _socketSubscriber;
         private readonly BitfinexModelConverter _bitfinexModelConverter;
