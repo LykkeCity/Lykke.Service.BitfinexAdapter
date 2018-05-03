@@ -1,8 +1,10 @@
-﻿namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums
+﻿using System.Runtime.Serialization;
+
+namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums
 {
     public enum TradeType
     {
-        Buy,
-        Sell
+        [EnumMember(Value = "Buy")] Buy,
+        [EnumMember(Value = "Sell")] Sell
     }
 }
