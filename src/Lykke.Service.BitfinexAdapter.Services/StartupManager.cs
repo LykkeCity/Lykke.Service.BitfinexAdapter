@@ -1,6 +1,10 @@
-﻿using Common.Log;
+﻿using Autofac;
+using Common.Log;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Services;
-using Lykke.Service.BitfinexAdapter.Services.Exchange;
+using Lykke.Service.BitfinexAdapter.Services.ExecutionHarvester;
+using Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester;
+using System;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter.Services
@@ -15,18 +19,37 @@ namespace Lykke.Service.BitfinexAdapter.Services
     public class StartupManager : IStartupManager
     {
         private readonly ILog _log;
-        private readonly ExchangeBase _exchange;
+        //private readonly ExchangeBase _exchange;
+        private readonly BitfinexOrderBooksHarvester _orderBooksHarvester;
+        private BitfinexAdapterSettings _settings;
+        private IComponentContext _container;
 
-        public StartupManager(ILog log, ExchangeBase exchange)
+        public StartupManager(ILog log, BitfinexOrderBooksHarvester orderBooksHarvester, BitfinexAdapterSettings settings, IComponentContext container)
         {
             _log = log;
-            _exchange = exchange;
+            _orderBooksHarvester = orderBooksHarvester;
+            _settings = settings;
+            _container = container;
         }
 
         public async Task StartAsync()
         {
-            _exchange.Start();
-            await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), $"{_exchange.Name} initialized.");
+            _orderBooksHarvester.Start();
+            await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), $"{nameof(BitfinexOrderBooksHarvester)} started.");
+
+            if (_settings.RabbitMq.Trades.Enabled) //subscribe to order execution only if trades publishing is enabled
+            {
+                foreach (var clientApiKeySecret in _settings.Credentials)
+                {
+                    if (!String.IsNullOrWhiteSpace(clientApiKeySecret.Value.ApiKey) && !String.IsNullOrWhiteSpace(clientApiKeySecret.Value.ApiSecret) && _container.IsRegisteredWithName<BitfinexExecutionHarvester>(clientApiKeySecret.Value.ApiKey))
+                    {
+                        var harvester = _container.ResolveNamed<BitfinexExecutionHarvester>(clientApiKeySecret.Value.ApiKey);
+                        harvester.Start();
+                        await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), $"{nameof(BitfinexExecutionHarvester)} started for client api key {clientApiKeySecret.Value.ApiKey}");
+                    }
+                }
+            }
+            
             await Task.CompletedTask;
         }
     }

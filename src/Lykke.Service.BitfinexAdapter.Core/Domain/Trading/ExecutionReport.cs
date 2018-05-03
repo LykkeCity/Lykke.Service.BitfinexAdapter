@@ -9,14 +9,9 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
     public class ExecutionReport
     {
         /// <summary>
-        /// A client assigned ID of the order
-        /// </summary>
-        public string ClientOrderId { get; internal set; }
-
-        /// <summary>
         /// An exchange assigned ID of the order
         /// </summary>
-        public string ExchangeOrderId { get; internal set; }
+        public long ExchangeOrderId { get; internal set; }
 
         /// <summary>
         /// An instrument description
@@ -24,10 +19,15 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
         public Instrument Instrument { get; internal set; }
 
         /// <summary>
+        /// OrderType
+        /// </summary>
+        public string OrderType { get; internal set; }
+
+        /// <summary>
         /// A trade direction
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public TradeType Type { get; internal set; }
+        public TradeType tradeType { get; internal set; }
 
         /// <summary>
         /// Transaction time
@@ -39,10 +39,16 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
         /// </summary>
         public decimal Price { get; internal set; }
 
+        public decimal AvgExecutionPrice { get; set; }
+
         /// <summary>
         /// Trade volume
         /// </summary>
-        public decimal Volume { get; internal set; }
+        public decimal OriginalVolume { get; internal set; }
+
+        public decimal ExecutedVolume { get; set; }
+
+        public decimal RemainingVolume { get; set; }
 
         /// <summary>
         /// Execution fee
@@ -71,16 +77,10 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
         /// <summary>
         /// An arbitrary message from the exchange related to the execution|order 
         /// </summary>
-        public string Message { get; internal set; }
+        public string Message { get; set; }
 
         /// <summary>
-        /// A type of the order
-        /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public OrderType OrderType { get; internal set; }
-
-        /// <summary>
-        /// A type of the execution. ExecType = Trade means it is an execution, otherwise it is an order
+        /// A side of the execution. ExecType = Trade means it is an execution, otherwise it is an order
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public ExecType ExecType { get; set; }
@@ -92,16 +92,19 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 
         [JsonConstructor]
         public ExecutionReport(Instrument instrument, DateTime time, decimal price,
-            decimal volume, TradeType type, string orderId, OrderExecutionStatus executionStatus)
+            decimal originalVolume, decimal executedVolume, TradeType _tradeType, long orderId, OrderExecutionStatus executionStatus, string orderType, decimal avgExecutionPrice)
         {
             Instrument = instrument;
             Time = time;
             Price = price;
-            Volume = volume;
-            Type = type;
+            OriginalVolume = originalVolume;
+            tradeType = _tradeType;
             Fee = 0; // TODO
             ExchangeOrderId = orderId;
             ExecutionStatus = executionStatus;
+            OrderType = orderType;
+            AvgExecutionPrice = avgExecutionPrice;
+            ExecutedVolume = executedVolume;
         }
 
         public override string ToString()

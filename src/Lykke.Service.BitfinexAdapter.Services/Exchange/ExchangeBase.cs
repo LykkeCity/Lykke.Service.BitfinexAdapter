@@ -2,10 +2,12 @@
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exchange;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Models;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -30,7 +32,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             State = ExchangeState.Initializing;
             LykkeLog = log;
 
-            Instruments = config.SupportedCurrencySymbols?.Select(x => new Instrument(Name, x.LykkeSymbol)).ToList() ?? new List<Instrument>();
+            Instruments = config.SupportedCurrencySymbols?.Select(x => new Instrument(x.LykkeSymbol)).ToList() ?? new List<Instrument>();
 
             if (!Instruments.Any() && config.UseSupportedCurrencySymbolsAsFilter != false)
             {
@@ -74,35 +76,28 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             Stopped?.Invoke();
         }
 
-        public abstract Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal,TimeSpan timeout);
+        public abstract Task<ReadOnlyCollection<WalletBalance>> GetWalletBalances(TimeSpan timeout);
 
-        public abstract Task<ExecutionReport> CancelOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout);
+        public abstract Task<ReadOnlyCollection<MarginBalanceDomain>> GetMarginBalances(TimeSpan timeout);
 
-        public virtual Task<ExecutionReport> GetOrder(string id, Instrument instrument, TimeSpan timeout)
-        {
-            throw new NotSupportedException($"{Name} does not support receiving order information by {nameof(id)} and {nameof(instrument)}");
-        }
+        public abstract Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout, long orderIdToReplace = 0);
 
-        public virtual Task<IEnumerable<AccountBalance>> GetAccountBalance(TimeSpan timeout)
-        {
-            return Task.FromResult(Enumerable.Empty<AccountBalance>());
-        }
+        public abstract Task<long> CancelOrder(long orderId, TimeSpan timeout);
 
-        public virtual Task<IReadOnlyCollection<TradingBalance>> GetTradeBalances(TimeSpan timeout)
-        {
-            throw new NotSupportedException();
-        }
+        public abstract Task<ExecutionReport> GetOrder(long id, TimeSpan timeout, OrderType orderType = OrderType.Unknown);
 
-        public virtual Task<IEnumerable<ExecutionReport>> GetOpenOrders(TimeSpan timeout)
+        public abstract Task<ReadOnlyCollection<ExecutionReport>> GetOpenOrders(TimeSpan timeout);
+
+        public abstract Task<ReadOnlyCollection<ExecutionReport>> GetOrdersHistory(TimeSpan timeout);
+
+        public abstract Task<ReadOnlyCollection<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout);
+
+        public virtual Task<ReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout)
         {
             throw new NotSupportedException();
         }
 
-        public virtual Task<IReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout)
-        {
-            throw new NotSupportedException();
-        }
+        public abstract Task<ReadOnlyCollection<string>> GetAllExchangeInstruments(TimeSpan timeout);
 
-        public abstract StreamingSupport StreamingSupport { get; }
     }
 }

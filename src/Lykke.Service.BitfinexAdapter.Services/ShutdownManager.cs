@@ -1,8 +1,8 @@
 ﻿using Common;
 using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Services;
-using Lykke.Service.BitfinexAdapter.Services.Exchange;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter.Services
@@ -16,12 +16,11 @@ namespace Lykke.Service.BitfinexAdapter.Services
     {
         private readonly ILog _log;
         private readonly List<IStopable> _items = new List<IStopable>();
-        private readonly ExchangeBase _exchange;
 
-        public ShutdownManager(ILog log, ExchangeBase exchange)
+        public ShutdownManager(ILog log, IEnumerable<IStopable> stopables) 
         {
             _log = log;
-            _exchange = exchange;
+            _items = stopables.ToList();
         }
 
         public void Register(IStopable stopable)
@@ -31,14 +30,11 @@ namespace Lykke.Service.BitfinexAdapter.Services
 
         public async Task StopAsync()
         {
-            // TODO: Implement your shutdown logic here. Good idea is to log every step
             foreach (var item in _items)
             {
                 item.Stop();
+                await _log.WriteInfoAsync(nameof(ShutdownManager), nameof(StopAsync), $"{item.GetType().Name} stopped.");
             }
-
-            _exchange.Stop();
-            await _log.WriteInfoAsync(nameof(ShutdownManager), nameof(StopAsync), $"{_exchange.Name} stopped.");
 
             await Task.CompletedTask;
         }

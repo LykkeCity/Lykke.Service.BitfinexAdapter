@@ -1,13 +1,12 @@
-﻿using Common.Log;
-using Lykke.Service.BitfinexAdapter.Core.Domain;
-using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
+﻿using Common;
+using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
-using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient;
 using Lykke.Service.BitfinexAdapter.Core.Handlers;
 using Lykke.Service.BitfinexAdapter.Core.RestClient;
+using Lykke.Service.BitfinexAdapter.Core.Throttling;
 using Lykke.Service.BitfinexAdapter.Core.Utils;
 using Lykke.Service.BitfinexAdapter.Core.WebSocketClient;
 using System;
@@ -17,32 +16,41 @@ using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 {
-    public sealed class BitfinexOrderBooksHarvester : OrderBooksWebSocketHarvester<object, string>
+    public sealed class BitfinexOrderBooksHarvester : OrderBooksWebSocketHarvester<object, string>, IStopable
     {
         private readonly BitfinexAdapterSettings _configuration;
         private readonly Dictionary<long, Channel> _channels;
-        //private readonly IHandler<TickPrice> _tickPriceHandler;
+        private readonly IHandler<TickPrice> _tickPriceHandler;
+        private readonly IThrottling _tickPriceThrottler;
         private readonly IBitfinexApi _exchangeApi;
 
         public BitfinexOrderBooksHarvester(BitfinexAdapterSettings configuration,
             IHandler<OrderBook> orderBookHandler,
-            //IHandler<TickPrice> tickPriceHandler,
+            IHandler<TickPrice> tickPriceHandler,
+            IThrottling orderBooksThrottler,
+            IThrottling tickPriceThrottler,
             ILog log)
-        : base(Constants.BitfinexExchangeName, configuration, new WebSocketTextMessenger(configuration.WebSocketEndpointUrl, log), log, orderBookHandler)
+        : base(configuration, new WebSocketTextMessenger(configuration.WebSocketEndpointUrl, log), log, orderBookHandler, orderBooksThrottler)
         {
             _configuration = configuration;
             _channels = new Dictionary<long, Channel>();
-            //_tickPriceHandler = tickPriceHandler;
-            var credenitals = new BitfinexServiceClientCredentials(configuration.ApiKey, configuration.ApiSecret);
-            _exchangeApi = new BitfinexApi(credenitals)
+            _tickPriceHandler = tickPriceHandler;
+            var credenitals = new BitfinexServiceClientCredentials(String.Empty, String.Empty); // bitfinex does not require key/scret for public events
+            _exchangeApi = new BitfinexApi(credenitals, log)
             {
                 BaseUri = new Uri(configuration.EndpointUrl)
             };
+            _tickPriceThrottler = tickPriceThrottler;
         }
 
 
         protected override async Task MessageLoopImpl()
         {
+            if (!_configuration.RabbitMq.TickPrices.Enabled && !_configuration.RabbitMq.OrderBooks.Enabled)
+            {
+                return;
+            }
+
             try
             {
                 await Messenger.ConnectAsync(CancellationToken);
@@ -88,12 +96,8 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 
             if (_configuration.UseSupportedCurrencySymbolsAsFilter == false)
             {
-                var response = await _exchangeApi.GetAllSymbols(CancellationToken);
-                if (response is Error error)
-                {
-                    throw new ApiException(error.Message);
-                }
-                var instrumentsFromExchange = ((IReadOnlyList<string>)response).Select(i => i.ToUpper()).ToList();
+                var response = await _exchangeApi.GetAllSymbolsAsync(CancellationToken);
+                var instrumentsFromExchange = (response).Select(i => i.ToUpper()).ToList();
 
                 foreach (var exchInstr in instrumentsFromExchange)
                 {
@@ -109,8 +113,14 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
                 await Log.WriteWarningAsync(nameof(Subscribe), "Subscribing for orderbooks", "Instruments list is empty - its either not set in config and UseSupportedCurrencySymbolsAsFilter is set to true or exchange returned empty symbols list. No symbols to subscribe for.");
             }
 
-            await SubscribeToOrderBookAsync(instrumentsToSubscribeFor);
-            await SubscribeToTickerAsync(instrumentsToSubscribeFor);
+            if (_configuration.RabbitMq.OrderBooks.Enabled)
+            {
+                await SubscribeToOrderBookAsync(instrumentsToSubscribeFor);
+            }
+            if (_configuration.RabbitMq.TickPrices.Enabled)
+            {
+                await SubscribeToTickerAsync(instrumentsToSubscribeFor);
+            }
         }
 
         private async Task SubscribeToOrderBookAsync(IEnumerable<string> instruments)
@@ -163,7 +173,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 
         private async Task HandleResponse(HeartbeatResponse heartbeat)
         {
-            await Log.WriteInfoAsync(nameof(HandleResponse), $"Bitfinex channel {_channels[heartbeat.ChannelId].Pair} heartbeat", string.Empty);
+            //await Log.WriteInfoAsync(nameof(HandleResponse), $"Bitfinex channel {_channels[heartbeat.ChannelId].Pair} heartbeat", string.Empty);
         }
 
         private async Task HandleResponse(OrderBookSnapshotResponse snapshot)
@@ -179,7 +189,12 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
         {
             var pair = _channels[ticker.ChannelId].Pair;
 
-            var tickPrice = new TickPrice(new Instrument(ExchangeName, pair), DateTime.UtcNow,
+            if (_tickPriceThrottler.NeedThrottle(pair))
+            {
+                return;
+            }
+
+            var tickPrice = new TickPrice(new Instrument(pair), DateTime.UtcNow, 
                 ticker.Ask, ticker.Bid);
             await CallTickPricesHandlers(tickPrice);
         }
@@ -204,8 +219,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 
         private Task CallTickPricesHandlers(TickPrice tickPrice)
         {
-            //return _tickPriceHandler.Handle(tickPrice);
-            return Task.CompletedTask;
+            return _tickPriceHandler.Handle(tickPrice);
         }
 
         private sealed class Channel

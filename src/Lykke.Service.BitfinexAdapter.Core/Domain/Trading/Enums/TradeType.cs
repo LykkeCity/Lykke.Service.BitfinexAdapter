@@ -2,7 +2,6 @@
 {
     public enum TradeType
     {
-        Unknown,
         Buy,
         Sell
     }

@@ -23,15 +23,13 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Settings
         [Optional]
         public bool UseSupportedCurrencySymbolsAsFilter { get; set; }
 
-        public string ApiKey { get; set; }
-
-        public string ApiSecret { get; set; }
+        public Dictionary<string, ApiKeyCredentials> Credentials { get; set; }
 
         public string EndpointUrl { get; set; }
 
         public string WebSocketEndpointUrl { get; set; }
 
-        public int MaxOrderBookRate { get; set; }
+        public int MaxEventPerSecondByInstrument { get; set; }
 
         public IReadOnlyCollection<CurrencySymbol> SupportedCurrencySymbols { get; set; }
     }

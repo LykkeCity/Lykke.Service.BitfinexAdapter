@@ -1,8 +1,10 @@
 ﻿using Common.Log;
+using Lykke.Service.BitfinexAdapter.Core.Domain;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Handlers;
+using Lykke.Service.BitfinexAdapter.Core.Throttling;
 using Lykke.Service.BitfinexAdapter.Core.Utils;
 using Polly;
 using System;
@@ -22,37 +24,31 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
         private readonly ConcurrentDictionary<string, OrderBookSnapshot> _orderBookSnapshots;
         private readonly ExchangeConverters _converters;
         private readonly Timer _heartBeatMonitoringTimer;
+        private readonly IThrottling _orderBooksThrottler;
         protected TimeSpan HeartBeatPeriod { get; set; } = TimeSpan.FromSeconds(30);
         private readonly TimeSpan _snapshotRefreshPeriod = TimeSpan.FromSeconds(5);
         private CancellationTokenSource _cancellationTokenSource;
         private Task _messageLoopTask;
         private readonly IHandler<OrderBook> _newOrderBookHandler;
-        private DateTime _lastPublishTime = DateTime.MinValue;
         private long _lastSecPublicationsNum;
-        private int _orderBooksReceivedInLastTimeFrame;
         private Task _measureTask;
-        private long _publishedToRabbit;
+        private long _totalOrderbooksPublishedToRabbit;
         private readonly Timer _snapshotRefreshTimer;
         private volatile bool _restartInProgress;
         private volatile bool _snapshotRefreshScheduled;
 
         protected BitfinexAdapterSettings AdapterSettings { get; }
-
-        public string ExchangeName { get; }
-
-        public int MaxOrderBookRate { get; set; }
-
-        protected OrderBooksHarvesterBase(string exchangeName, BitfinexAdapterSettings adapterSettings, ILog log,
-            IHandler<OrderBook> newOrderBookHandler)
+        
+        protected OrderBooksHarvesterBase(BitfinexAdapterSettings adapterSettings, ILog log,
+            IHandler<OrderBook> newOrderBookHandler,
+            IThrottling orderBooksThrottler)
         {
             AdapterSettings = adapterSettings;
             _newOrderBookHandler = newOrderBookHandler;
-            ExchangeName = exchangeName;
 
             Log = log.CreateComponentScope(GetType().Name);
 
-            _converters = new ExchangeConverters(adapterSettings.SupportedCurrencySymbols,
-                string.Empty, adapterSettings.UseSupportedCurrencySymbolsAsFilter);
+            _converters = new ExchangeConverters(adapterSettings.SupportedCurrencySymbols, adapterSettings.UseSupportedCurrencySymbolsAsFilter);
 
             _orderBookSnapshots = new ConcurrentDictionary<string, OrderBookSnapshot>();
             _cancellationTokenSource = new CancellationTokenSource();
@@ -60,6 +56,8 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 
             _heartBeatMonitoringTimer = new Timer(s => RestartMessenger("No messages from the exchange"));
             _snapshotRefreshTimer = new Timer(s => RestartMessenger("Refresh order book snapshot"));
+
+            _orderBooksThrottler = orderBooksThrottler;
         }
 
         private void RestartMessenger(string reason)
@@ -97,12 +95,13 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             while (!CancellationToken.IsCancellationRequested)
             {
                 var msgInSec = _lastSecPublicationsNum / period;
-                var pubInSec = _publishedToRabbit / period;
-                await Log.WriteInfoAsync(nameof(OrderBooksHarvesterBase),
-                    $"Receive rate from {ExchangeName} {msgInSec} per second, publish rate to " +
-                    $"RabbitMq {pubInSec} per second", string.Empty);
+                var pubInSec = _totalOrderbooksPublishedToRabbit / period;
+                await Log.WriteInfoAsync(
+                    nameof(OrderBooksHarvesterBase), 
+                    nameof(Measure),
+                    $"Receive rate from {Constants.BitfinexExchangeName} {msgInSec} per second, publish rate to RabbitMq {pubInSec} per second.");
                 _lastSecPublicationsNum = 0;
-                _publishedToRabbit = 0;
+                _totalOrderbooksPublishedToRabbit = 0;
                 await Task.Delay(TimeSpan.FromSeconds(period), CancellationToken).ConfigureAwait(false);
             }
         }
@@ -178,19 +177,21 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
         private async Task PublishOrderBookSnapshotAsync(string pair)
         {
             _lastSecPublicationsNum++;
-            if (NeedThrottle())
+            if (_orderBooksThrottler.NeedThrottle(pair))
             {
                 return;
             }
 
             var obs = _orderBookSnapshots[pair];
             var orderBook = new OrderBook(
-                     ExchangeName,
+                     Constants.BitfinexExchangeName,
                      _converters.ExchangeSymbolToLykkeInstrument(obs.AssetPair).Name,
                      obs.Asks.Values.Select(i => new VolumePrice(i.Price, i.Size)).ToArray(),
                      obs.Bids.Values.Select(i => new VolumePrice(i.Price, i.Size)).ToArray(),
                      DateTime.UtcNow);
-            _publishedToRabbit++;
+            _totalOrderbooksPublishedToRabbit++;
+
+
 
             if (orderBook.Asks.Any() || orderBook.Bids.Any())
             {
@@ -205,7 +206,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             if (!_orderBookSnapshots.TryGetValue(pair, out var orderBook))
             {
                 var message = "Trying to retrieve a non-existing pair order book snapshot " +
-                              $"for exchange {ExchangeName} and pair {pair}";
+                              $"for exchange {Constants.BitfinexExchangeName} and pair {pair}";
                 await Log.WriteErrorAsync(nameof(MessageLoopImpl), nameof(MessageLoopImpl),
                     new OrderBookInconsistencyException(message));
                 throw new OrderBookInconsistencyException(message);
@@ -214,16 +215,11 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             return orderBook;
         }
 
-        protected bool TryGetOrderBookSnapshot(string pair, out OrderBookSnapshot orderBookSnapshot)
-        {
-            return _orderBookSnapshots.TryGetValue(pair, out orderBookSnapshot);
-        }
-
         protected async Task HandleOrderBookSnapshotAsync(string pair, DateTime timeStamp, IEnumerable<OrderBookItem> orders)
         {
-            var orderBookSnapshot = new OrderBookSnapshot(ExchangeName, pair, timeStamp, Log, AdapterSettings.SupportedCurrencySymbols);
+            var orderBookSnapshot = new OrderBookSnapshot(Constants.BitfinexExchangeName, pair, timeStamp, Log, AdapterSettings.SupportedCurrencySymbols);
             orderBookSnapshot.AddOrUpdateOrders(orders);
-            if (await orderBookSnapshot.DetectNegativeSpread())
+            if (orderBookSnapshot.DetectNegativeSpread())
             {
                 ScheduleSnapshotRefresh();
             }
@@ -256,16 +252,15 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
                     throw new ArgumentOutOfRangeException(nameof(orderEventType), orderEventType, null);
             }
 
-            if (await orderBookSnapshot.DetectNegativeSpread())
+            if (orderBookSnapshot.DetectNegativeSpread())
             {
                 ScheduleSnapshotRefresh();
             }
             else
             {
                 CancelSnapshotRefresh();
+                await PublishOrderBookSnapshotAsync(pair);
             }
-
-            await PublishOrderBookSnapshotAsync(pair);
         }
 
         private void ScheduleSnapshotRefresh()
@@ -288,30 +283,6 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             }
             _snapshotRefreshScheduled = false;
             _snapshotRefreshTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
-        }
-
-        private bool NeedThrottle()
-        {
-            var result = false;
-            if (MaxOrderBookRate == 0)
-            {
-                return result;
-            }
-            if (_orderBooksReceivedInLastTimeFrame >= MaxOrderBookRate)
-            {
-                var now = DateTime.UtcNow;
-                if ((now - _lastPublishTime).TotalSeconds >= 1)
-                {
-                    _orderBooksReceivedInLastTimeFrame = 0;
-                    _lastPublishTime = now;
-                }
-                else
-                {
-                    result = true;
-                }
-            }
-            _orderBooksReceivedInLastTimeFrame++;
-            return result;
         }
 
         public void Dispose()

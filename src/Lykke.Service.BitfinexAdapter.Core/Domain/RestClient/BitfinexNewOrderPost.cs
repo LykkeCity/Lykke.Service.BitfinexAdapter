@@ -2,7 +2,7 @@
 
 namespace Lykke.Service.BitfinexAdapter.Core.Domain.RestClient
 {
-    public sealed class BitfinexNewOrderPost : BitfinexPostBase
+    public class BitfinexNewOrderPost : BitfinexPostBase
    {
       [JsonProperty("symbol")]
       public string Symbol { get; set; }

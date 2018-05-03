@@ -7,7 +7,7 @@
         PartialFill,
         Cancelled,
         Rejected,
-        New,
+        Active,
         Pending
     }
 }

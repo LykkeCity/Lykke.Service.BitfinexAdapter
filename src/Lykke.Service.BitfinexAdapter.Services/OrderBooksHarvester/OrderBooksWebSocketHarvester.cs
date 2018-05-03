@@ -2,6 +2,7 @@
 using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Handlers;
+using Lykke.Service.BitfinexAdapter.Core.Throttling;
 using Lykke.Service.BitfinexAdapter.Core.WebSocketClient;
 
 namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
@@ -10,9 +11,9 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
     {
         protected IMessenger<TRequest, TResponse> Messenger;
 
-        protected OrderBooksWebSocketHarvester(string exchangeName, BitfinexAdapterSettings adapterSettings, IMessenger<TRequest, TResponse> messanger, ILog log,
-            IHandler<OrderBook> orderBookHandler)
-            : base(exchangeName, adapterSettings, log, orderBookHandler)
+        protected OrderBooksWebSocketHarvester(BitfinexAdapterSettings adapterSettings, IMessenger<TRequest, TResponse> messanger, ILog log,
+            IHandler<OrderBook> orderBookHandler, IThrottling orderBooksThrottler)
+            : base(adapterSettings, log, orderBookHandler, orderBooksThrottler)
         {
             Messenger = messanger;
         }

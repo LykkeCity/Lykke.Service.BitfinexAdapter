@@ -9,8 +9,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
         [JsonConstructor]
         public TradingSignal(
             Instrument instrument,
-            string orderId, OrderCommand command, TradeType tradeType, decimal? price, decimal volume, DateTime time, OrderType orderType = OrderType.Market,
-            TimeInForce timeInForce = TimeInForce.FillOrKill)
+            string orderId, OrderCommand command, TradeType tradeType, decimal? price, decimal volume, bool isMarginOrder, DateTime time, OrderType orderType = OrderType.Market)
         {
             Instrument = instrument;
 
@@ -22,8 +21,10 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
             Volume = volume;
             Time = time;
             OrderType = orderType;
-            TimeInForce = timeInForce;
+            IsMarginOrder = isMarginOrder;
         }
+
+        public bool IsMarginOrder { get; }
 
         public Instrument Instrument { get; }
 
@@ -31,9 +32,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 
         public OrderType OrderType { get; }
 
-        public TradeType TradeType { get; }
-
-        public TimeInForce TimeInForce { get; }
+        public TradeType TradeType{ get; }
 
         public decimal? Price { get; }
 
@@ -45,7 +44,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 
         public override string ToString()
         {
-            return $"Id: {OrderId}, Time: {Time}, Instrument: {Instrument}, Command: {Command}, TradeType: {TradeType}, Price: {Price}, Count: {Volume}";
+            return $"Id: {OrderId}, Time: {Time}, Instrument: {Instrument}, Command: {Command}, TradeType: {TradeType}, Price: {Price}, Count: {Volume}, OrderType: {OrderType}, IsMargin {IsMarginOrder}";
         }
 
         public bool IsTimeInThreshold(TimeSpan threshold)
