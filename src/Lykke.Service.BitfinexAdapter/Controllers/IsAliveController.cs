@@ -8,7 +8,7 @@ using System.Net;
 namespace Lykke.Service.BitfinexAdapter.Controllers
 {
     // NOTE: See https://lykkex.atlassian.net/wiki/spaces/LKEWALLET/pages/35755585/Add+your+app+to+Monitoring
-    [Route("api/v1/[controller]")]
+    [Route("api/[controller]")]
     public class IsAliveController : Controller
     {
         private readonly IHealthService _healthService;
