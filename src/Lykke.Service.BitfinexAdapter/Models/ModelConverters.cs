@@ -1,7 +1,9 @@
 ﻿using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
-using Lykke.Service.BitfinexAdapter.Models.LimitOrders;
 using System;
+using System.Globalization;
+using Lykke.Common.ExchangeAdapter.SpotController.Records;
+using MarketOrderRequest = Lykke.Service.BitfinexAdapter.Models.LimitOrders.MarketOrderRequest;
 
 namespace Lykke.Service.BitfinexAdapter.Models
 {
@@ -36,14 +38,14 @@ namespace Lykke.Service.BitfinexAdapter.Models
         {
             return new OrderModel
             {
-                Id = o.ExchangeOrderId,
+                Id = o.ExchangeOrderId.ToString(CultureInfo.InvariantCulture),
                 Symbol = o.Instrument.Name,
                 Price = o.Price,
                 OriginalVolume = o.OriginalVolume,
-                TradeType = o.tradeType.ToString(),
+                TradeType = o.tradeType,
                 Timestamp = o.Time,
                 AvgExecutionPrice = o.AvgExecutionPrice,
-                ExecutionStatus = o.ExecutionStatus.ToString(),
+                ExecutionStatus = o.ExecutionStatus,
                 ExecutedVolume = o.ExecutedVolume,
                 RemainingAmount = o.RemainingVolume,
                 

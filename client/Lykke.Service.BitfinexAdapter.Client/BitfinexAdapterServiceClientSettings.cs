@@ -1,5 +1,3 @@
-using System;
-
 namespace Lykke.Service.BitfinexAdapter.Client 
 {
     public class BitfinexAdapterServiceClientSettings 

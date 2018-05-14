@@ -1,10 +1,12 @@
-﻿using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
-using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
+﻿using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient;
 using System;
 using System.Globalization;
+using Lykke.Common.ExchangeAdapter.Contracts;
+using Lykke.Common.ExchangeAdapter.SpotController.Records;
+using OrderBookItem = Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks.OrderBookItem;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Utils
 {
@@ -33,7 +35,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
             var transactionTime = eu.TimeStamp;
             var tradeType = ConvertTradeType(eu.Volume);
             var orderId = eu.OrderId;
-            return new ExecutionReport(instrument, transactionTime, eu.OrderPrice ?? 0 /*could it be 0 when its a market order?*/, eu.Volume/*we set status to Fill, hence original and executed amount should be equal*/, eu.Volume, tradeType, orderId, OrderExecutionStatus.Fill, eu.OrderType, eu.Price)
+            return new ExecutionReport(instrument, transactionTime, eu.OrderPrice ?? 0 /*could it be 0 when its a market order?*/, eu.Volume/*we set status to Fill, hence original and executed amount should be equal*/, eu.Volume, tradeType, orderId, OrderStatus.Fill, eu.OrderType, eu.Price)
             {
                 Message = eu.OrderType,
                 Fee = eu.Fee,

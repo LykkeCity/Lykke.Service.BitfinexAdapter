@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Lykke.Service.BitfinexAdapter.Models.LimitOrders;
+using Lykke.Common.ExchangeAdapter.SpotController.Records;
 
 namespace Lykke.Service.BitfinexAdapter.Models.Validation
 {
@@ -8,7 +8,6 @@ namespace Lykke.Service.BitfinexAdapter.Models.Validation
         public ReplaceLimitOrderRequestValidationModel()
         {
             RuleFor(reg => reg.TradeType).SetValidator(new TradeTypeEnumValidator()).WithMessage(s => $"Unrecognized tradeType {s.TradeType}");
-            RuleFor(reg => reg.OrderIdToCancel).GreaterThan(0).WithMessage(s => "OrderId to replace not specified.");
         }
     }
 }

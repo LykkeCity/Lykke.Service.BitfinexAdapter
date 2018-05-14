@@ -1,6 +1,7 @@
 ﻿using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using Newtonsoft.Json;
 using System;
+using Lykke.Common.ExchangeAdapter.Contracts;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 {

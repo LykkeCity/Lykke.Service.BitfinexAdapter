@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Lykke.Service.BitfinexAdapter.Models.LimitOrders;
+using Lykke.Common.ExchangeAdapter.SpotController.Records;
 
 namespace Lykke.Service.BitfinexAdapter.Models.Validation
 {

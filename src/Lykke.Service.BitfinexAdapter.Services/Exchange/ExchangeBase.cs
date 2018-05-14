@@ -3,7 +3,6 @@ using Lykke.Service.BitfinexAdapter.Core.Domain.Exchange;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
-using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Models;
 using System;
 using System.Collections.Generic;
@@ -13,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 {
-    public abstract class ExchangeBase : IExchange
+    public abstract class ExchangeBase
     {
         protected readonly ILog LykkeLog;
 
@@ -90,7 +89,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         public abstract Task<ReadOnlyCollection<ExecutionReport>> GetOrdersHistory(TimeSpan timeout);
 
-        public abstract Task<ReadOnlyCollection<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout);
+        public abstract Task<ReadOnlyCollection<ExecutionReport>> GetLimitOrders(bool isMarginRequest, TimeSpan timeout);
 
         public virtual Task<ReadOnlyCollection<TradingPosition>> GetPositionsAsync(TimeSpan timeout)
         {

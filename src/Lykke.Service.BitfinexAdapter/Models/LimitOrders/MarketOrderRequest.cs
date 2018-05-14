@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
+using Lykke.Common.ExchangeAdapter.Contracts;
 using Newtonsoft.Json.Converters;
 
 namespace Lykke.Service.BitfinexAdapter.Models.LimitOrders

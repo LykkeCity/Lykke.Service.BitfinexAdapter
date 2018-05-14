@@ -3,6 +3,8 @@ using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
+using Lykke.Common.ExchangeAdapter.Contracts;
+using Lykke.Common.ExchangeAdapter.SpotController.Records;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 {
@@ -69,7 +71,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
         /// Current status of the order
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public OrderExecutionStatus ExecutionStatus { get; internal set; }
+        public OrderStatus ExecutionStatus { get; internal set; }
 
         [JsonConverter(typeof(StringEnumConverter))]
         public OrderStatusUpdateFailureType FailureType { get; set; }
@@ -92,7 +94,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Trading
 
         [JsonConstructor]
         public ExecutionReport(Instrument instrument, DateTime time, decimal price,
-            decimal originalVolume, decimal executedVolume, TradeType _tradeType, long orderId, OrderExecutionStatus executionStatus, string orderType, decimal avgExecutionPrice)
+            decimal originalVolume, decimal executedVolume, TradeType _tradeType, long orderId, OrderStatus executionStatus, string orderType, decimal avgExecutionPrice)
         {
             Instrument = instrument;
             Time = time;

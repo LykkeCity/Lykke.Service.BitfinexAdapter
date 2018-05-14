@@ -1,5 +1,4 @@
-﻿using Castle.Core.Internal;
-using Common.Log;
+﻿using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
@@ -16,6 +15,8 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Lykke.Common.ExchangeAdapter.SpotController.Records;
+using Order = Lykke.Service.BitfinexAdapter.Core.Domain.RestClient.Order;
 
 //using Position = Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Position;
 
@@ -79,7 +80,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             }
         }
 
-        public override async Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout, long orderIdToReplace = 0)
+        public override async Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout, long orderIdToReplace)
         {
             var symbol = _modelConverter.LykkeSymbolToExchangeSymbol(signal.Instrument.Name);
             var volume = signal.Volume;
@@ -153,22 +154,12 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             }
         }
 
-        public override async Task<ReadOnlyCollection<ExecutionReport>> GetLimitOrders(List<string> instrumentsFilter, List<long> orderIdFilter, bool isMarginRequest, TimeSpan timeout)
+        public override async Task<ReadOnlyCollection<ExecutionReport>> GetLimitOrders(bool isMarginRequest, TimeSpan timeout)
         {
             var orders = await GetOrders(_exchangeApi.GetActiveOrdersAsync, timeout); 
 
             orders = (isMarginRequest ? orders.Where(o => o.OrderType.Equals(_modelConverter.ConvertToMarginOrderType(OrderType.Limit), StringComparison.InvariantCultureIgnoreCase)) : 
                                        orders.Where(o => o.OrderType.Equals(_modelConverter.ConvertToSpotOrderType(OrderType.Limit), StringComparison.InvariantCultureIgnoreCase))).ToList();
-
-            if (!orderIdFilter.IsNullOrEmpty())
-            {
-                orders = orders.Where(o => orderIdFilter.Contains(o.ExchangeOrderId));
-            }
-
-            if (!instrumentsFilter.IsNullOrEmpty())
-            {
-                orders = orders.Where(o => instrumentsFilter.Any(i=>i.Equals(o.Instrument.Name, StringComparison.InvariantCultureIgnoreCase)));
-            }
 
             return new ReadOnlyCollection<ExecutionReport>(orders.ToList());
         }
@@ -290,17 +281,17 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
 
         }
 
-        private static OrderExecutionStatus ConvertExecutionStatus(Order order)
+        private static OrderStatus ConvertExecutionStatus(Order order)
         {
             if (order.IsCancelled)
             {
-                return OrderExecutionStatus.Cancelled;
+                return OrderStatus.Canceled;
             }
             if (order.IsLive)
             {
-                return OrderExecutionStatus.Active;
+                return OrderStatus.Active;
             }
-            return OrderExecutionStatus.Fill;
+            return OrderStatus.Fill;
         }
 
     }

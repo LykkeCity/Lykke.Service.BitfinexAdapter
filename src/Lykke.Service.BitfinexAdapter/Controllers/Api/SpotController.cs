@@ -4,14 +4,18 @@ using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using Lykke.Service.BitfinexAdapter.Models;
-using Lykke.Service.BitfinexAdapter.Models.LimitOrders;
-using Lykke.Service.BitfinexAdapter.Models.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Lykke.Common.ExchangeAdapter.SpotController.Records;
+using CancelLimitOrderRequest = Lykke.Service.BitfinexAdapter.Models.LimitOrders.CancelLimitOrderRequest;
+using CancelLimitOrderResponse = Lykke.Service.BitfinexAdapter.Models.Responses.CancelLimitOrderResponse;
+using MarketOrderRequest = Lykke.Service.BitfinexAdapter.Models.LimitOrders.MarketOrderRequest;
+using OrderIdResponse = Lykke.Service.BitfinexAdapter.Models.Responses.OrderIdResponse;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 {
@@ -29,16 +33,22 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("GetWalletBalances")]
         [HttpGet("getWallets")]
         [ProducesResponseType(typeof(GetWalletsResponse), 200)]
-        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.InternalServerError)]
+        [ProducesResponseType(typeof(ErrorModel), (int) HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetWalletBalances()
         {
             try
             {
-                return Ok(new GetWalletsResponse { Wallets = (await GetAuthenticatedExchange().GetWalletBalances(TimeSpan.FromSeconds(DefaultTimeOutSeconds))).Select(m => m.ToApiModel()) });
+                var balances = await GetAuthenticatedExchange()
+                    .GetWalletBalances(TimeSpan.FromSeconds(DefaultTimeOutSeconds));
+
+                return Ok(new GetWalletsResponse
+                {
+                    Wallets = balances.Select(m => m.ToApiModel()).ToArray()
+                });
             }
             catch (ApiException e)
             {
-                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(e.Message, e.ErrorCode));
+                return StatusCode((int) HttpStatusCode.InternalServerError, new ErrorModel(e.Message, e.ErrorCode));
             }
         }
 
@@ -49,18 +59,11 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [HttpGet("getLimitOrders")]
         [ProducesResponseType(typeof(GetLimitOrdersResponse), 200)]
         [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetLimitOrders(string orderIds, string instruments)
+        public async Task<IActionResult> GetLimitOrders()
         {
             try
             {
-                var orderIdsParsed = orderIds?.Split(",").Select(s =>
-                {
-                    if (long.TryParse(s.Trim(), out var parsed)) { return parsed; }
-                    return 0;
-                }).Where(s => s != 0).ToList();
-
-
-                var orders = await GetAuthenticatedExchange().GetLimitOrders(instruments?.Split(",").Select(s => s.Trim()).ToList(), orderIdsParsed, false, TimeSpan.FromSeconds(DefaultTimeOutSeconds));
+                var orders = await GetAuthenticatedExchange().GetLimitOrders(false, TimeSpan.FromSeconds(DefaultTimeOutSeconds));
                 return Ok(new GetLimitOrdersResponse { Orders = orders.Select(s => s.ToApiModel()).ToList() });
             }
             catch (ApiException e)
@@ -178,15 +181,17 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         [SwaggerOperation("ReplaceLimitOrder")]
         [HttpPost("replaceLimitOrder")]
         [ProducesResponseType(typeof(OrderIdResponse), 200)]
-        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(ErrorModel), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorModel), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorModel), (int) HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorModel), (int) HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> ReplaceLimitOrder([FromBody]ReplaceLimitOrderRequest request)
+        public async Task<IActionResult> ReplaceLimitOrder([FromBody] ReplaceLimitOrderRequest request)
         {
             try
             {
-                var result = await GetAuthenticatedExchange().AddOrderAndWaitExecution(request.ToLimitOrder(false), TimeSpan.FromSeconds(DefaultTimeOutSeconds), request.OrderIdToCancel);
-                return Ok(new OrderIdResponse {OrderId = result.ExchangeOrderId.ToString() });
+                var result = await GetAuthenticatedExchange().AddOrderAndWaitExecution(request.ToLimitOrder(false),
+                    TimeSpan.FromSeconds(DefaultTimeOutSeconds), ToOrderIdOrThrow(request.OrderIdToCancel));
+                return Ok(new OrderIdResponse
+                    {OrderId = result.ExchangeOrderId.ToString(CultureInfo.InvariantCulture)});
             }
             catch (ApiException e)
             {
@@ -199,8 +204,21 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
                 {
                     return BadRequest(new ErrorModel(e.Message, e.ErrorCode));
                 }
-                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(e.Message, e.ErrorCode));
+
+                return StatusCode((int) HttpStatusCode.InternalServerError, new ErrorModel(e.Message, e.ErrorCode));
             }
+        }
+
+        private long ToOrderIdOrThrow(string orderId)
+        {
+            if (!long.TryParse(orderId, out var id))
+            {
+                throw new ApiException(
+                    "BitFinex order id could be only positive integer number",
+                    HttpStatusCode.BadRequest);
+            }
+
+            return id;
         }
 
         /// <summary>

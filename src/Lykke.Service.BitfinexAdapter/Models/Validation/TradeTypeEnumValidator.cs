@@ -1,6 +1,6 @@
 ﻿using FluentValidation.Validators;
-using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using System;
+using Lykke.Common.ExchangeAdapter.Contracts;
 
 namespace Lykke.Service.BitfinexAdapter.Models.Validation
 {
