@@ -13,6 +13,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Lykke.Common.ExchangeAdapter.Contracts;
+using TickPrice = Lykke.Service.BitfinexAdapter.Core.Domain.Trading.TickPrice;
 
 namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 {

@@ -1,4 +1,4 @@
-﻿using Common.Log;
+using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Lykke.Common.ExchangeAdapter.Contracts;
+using OrderBookItem = Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks.OrderBookItem;
 
 namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
 {
@@ -186,9 +188,9 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             var orderBook = new OrderBook(
                      Constants.BitfinexExchangeName,
                      _converters.ExchangeSymbolToLykkeInstrument(obs.AssetPair).Name,
-                     obs.Asks.Values.Select(i => new VolumePrice(i.Price, i.Size)).ToArray(),
-                     obs.Bids.Values.Select(i => new VolumePrice(i.Price, i.Size)).ToArray(),
-                     DateTime.UtcNow);
+                     DateTime.UtcNow,
+                     obs.Asks.Values.Select(i => new Common.ExchangeAdapter.Contracts.OrderBookItem(i.Price, i.Size)),
+                     obs.Bids.Values.Select(i => new Common.ExchangeAdapter.Contracts.OrderBookItem(i.Price, i.Size)));
             _totalOrderbooksPublishedToRabbit++;
 
 

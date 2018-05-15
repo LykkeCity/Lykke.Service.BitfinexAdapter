@@ -18,6 +18,8 @@ using Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using Lykke.Common.ExchangeAdapter.Contracts;
+using TickPrice = Lykke.Service.BitfinexAdapter.Core.Domain.Trading.TickPrice;
 
 namespace Lykke.Service.BitfinexAdapter.Modules
 {
