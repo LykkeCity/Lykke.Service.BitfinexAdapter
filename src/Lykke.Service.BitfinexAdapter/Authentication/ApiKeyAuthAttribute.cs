@@ -12,7 +12,7 @@ namespace Lykke.Service.BitfinexAdapter.Authentication
 {
     public sealed class ApiKeyAuthAttribute : ActionFilterAttribute
     {
-        internal static Dictionary<string, ApiKeyCredentials> ClientApiKeys { get; set; }
+        internal static IReadOnlyDictionary<string, ApiKeyCredentials> ClientApiKeys { get; set; }
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {

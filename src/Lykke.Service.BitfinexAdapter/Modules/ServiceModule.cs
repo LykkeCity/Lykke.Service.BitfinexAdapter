@@ -96,14 +96,14 @@ namespace Lykke.Service.BitfinexAdapter.Modules
         {
             foreach (var clientApiKeySecret in _settings.CurrentValue.BitfinexAdapterService.Credentials)
             {
-                if (!String.IsNullOrWhiteSpace(clientApiKeySecret.Value.ApiKey) && !String.IsNullOrWhiteSpace(clientApiKeySecret.Value.ApiSecret))
+                if (!String.IsNullOrWhiteSpace(clientApiKeySecret.ApiKey) && !String.IsNullOrWhiteSpace(clientApiKeySecret.ApiSecret))
                 {
-                    var socketSubscriber = new BitfinexWebSocketSubscriber(_settings.CurrentValue.BitfinexAdapterService, true, _log, clientApiKeySecret.Value.ApiKey, clientApiKeySecret.Value.ApiSecret);
+                    var socketSubscriber = new BitfinexWebSocketSubscriber(_settings.CurrentValue.BitfinexAdapterService, true, _log, clientApiKeySecret.ApiKey, clientApiKeySecret.ApiSecret);
                     builder.RegisterType<BitfinexExecutionHarvester>()
                         .AsSelf()
                         .As<IStopable>()
                         .WithParameter("socketSubscriber", socketSubscriber)
-                        .Named<BitfinexExecutionHarvester>(clientApiKeySecret.Value.ApiKey).SingleInstance();
+                        .Named<BitfinexExecutionHarvester>(clientApiKeySecret.ApiKey).SingleInstance();
                 }
             }
         }

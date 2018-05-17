@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.BitfinexAdapter
@@ -67,7 +68,8 @@ namespace Lykke.Service.BitfinexAdapter
 
                 Log = CreateLogWithSlack(services, appSettings);
 
-                ApiKeyAuthAttribute.ClientApiKeys = appSettings.CurrentValue.BitfinexAdapterService.Credentials;
+                ApiKeyAuthAttribute.ClientApiKeys = appSettings.CurrentValue.BitfinexAdapterService.Credentials
+                    .ToDictionary(x => x.InternalApiKey);
 
                 builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x), Log));
                 builder.Populate(services);

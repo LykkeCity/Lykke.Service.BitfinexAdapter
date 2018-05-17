@@ -6,6 +6,7 @@ using Lykke.Service.BitfinexAdapter.Services.Exchange;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using System;
+using System.Linq;
 using System.Security.Authentication;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
@@ -27,17 +28,18 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 
         protected ExchangeBase GetAuthenticatedExchange()
         {
-            StringValues clientXapiKey;
-
-            if (!Request.Headers.TryGetValue(Constants.XApiKeyHeaderName, out clientXapiKey) || 
-                !_configuration.Credentials.ContainsKey(clientXapiKey) ||
-                String.IsNullOrWhiteSpace(_configuration.Credentials[clientXapiKey].ApiKey) ||
-                String.IsNullOrWhiteSpace(_configuration.Credentials[clientXapiKey].ApiSecret))
+            if (Request.Headers.TryGetValue(Constants.XApiKeyHeaderName, out var clientXapiKey))
             {
-                throw new AuthenticationException(Constants.AuthenticationError);
+                var creds = _configuration.Credentials.FirstOrDefault(x =>
+                    x.InternalApiKey.Equals(clientXapiKey, StringComparison.InvariantCultureIgnoreCase));
+
+                if (creds != null)
+                {
+                    return new BitfinexExchange(_configuration, creds.ApiKey, creds.ApiSecret, _log);
+                }
             }
 
-            return new BitfinexExchange(_configuration, _configuration.Credentials[clientXapiKey].ApiKey, _configuration.Credentials[clientXapiKey].ApiSecret, _log);
+            throw new AuthenticationException(Constants.AuthenticationError);
         }
 
         protected ExchangeBase GetUnAuthenticatedExchange()

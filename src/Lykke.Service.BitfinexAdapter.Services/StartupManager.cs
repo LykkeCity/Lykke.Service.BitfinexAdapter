@@ -41,11 +41,11 @@ namespace Lykke.Service.BitfinexAdapter.Services
             {
                 foreach (var clientApiKeySecret in _settings.Credentials)
                 {
-                    if (!String.IsNullOrWhiteSpace(clientApiKeySecret.Value.ApiKey) && !String.IsNullOrWhiteSpace(clientApiKeySecret.Value.ApiSecret) && _container.IsRegisteredWithName<BitfinexExecutionHarvester>(clientApiKeySecret.Value.ApiKey))
+                    if (!String.IsNullOrWhiteSpace(clientApiKeySecret.ApiKey) && !String.IsNullOrWhiteSpace(clientApiKeySecret.ApiSecret) && _container.IsRegisteredWithName<BitfinexExecutionHarvester>(clientApiKeySecret.ApiKey))
                     {
-                        var harvester = _container.ResolveNamed<BitfinexExecutionHarvester>(clientApiKeySecret.Value.ApiKey);
+                        var harvester = _container.ResolveNamed<BitfinexExecutionHarvester>(clientApiKeySecret.ApiKey);
                         harvester.Start();
-                        await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), $"{nameof(BitfinexExecutionHarvester)} started for client api key {clientApiKeySecret.Value.ApiKey}");
+                        await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), $"{nameof(BitfinexExecutionHarvester)} started for client api key {clientApiKeySecret.ApiKey}");
                     }
                 }
             }

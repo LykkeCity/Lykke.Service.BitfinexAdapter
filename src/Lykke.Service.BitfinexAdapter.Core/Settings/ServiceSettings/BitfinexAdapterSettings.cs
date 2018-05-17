@@ -1,6 +1,8 @@
 ﻿using Lykke.Service.BitfinexAdapter.Core.Settings.ServiceSettings;
 using Lykke.SettingsReader.Attributes;
 using System.Collections.Generic;
+using Lykke.Common.ExchangeAdapter.Settings;
+using Newtonsoft.Json;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Domain.Settings
 {
@@ -23,7 +25,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Settings
         [Optional]
         public bool UseSupportedCurrencySymbolsAsFilter { get; set; }
 
-        public Dictionary<string, ApiKeyCredentials> Credentials { get; set; }
+        public IReadOnlyCollection<ApiKeyCredentials> Credentials { get; set; }
 
         public string EndpointUrl { get; set; }
 
