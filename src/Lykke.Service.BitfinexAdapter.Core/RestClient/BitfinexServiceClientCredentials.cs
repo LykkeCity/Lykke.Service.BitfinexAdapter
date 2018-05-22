@@ -14,12 +14,12 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         private const string ApiBfxPayload = "X-BFX-PAYLOAD";
         private const string ApiBfxSig = "X-BFX-SIGNATURE";
 
-        private readonly string _apiKey;
+        public readonly string ApiKey;
         private readonly string _apiSecret;
 
         public BitfinexServiceClientCredentials(string apiKey, string apiSecret)
         {
-            _apiKey = apiKey;
+            ApiKey = apiKey;
             _apiSecret = apiSecret;
         }
 
@@ -29,7 +29,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             var jsonObj = await request.Content.ReadAsStringAsync();
             var payload = Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonObj));
 
-            request.Headers.Add(ApiBfxKey, _apiKey);
+            request.Headers.Add(ApiBfxKey, ApiKey);
             request.Headers.Add(ApiBfxPayload, payload);
             request.Headers.Add(ApiBfxSig, GetHexHashSignature(payload));
         }

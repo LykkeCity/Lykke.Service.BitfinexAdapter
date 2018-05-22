@@ -1,8 +1,6 @@
 ﻿using Lykke.Service.BitfinexAdapter.Core.Settings.ServiceSettings;
 using Lykke.SettingsReader.Attributes;
 using System.Collections.Generic;
-using Lykke.Common.ExchangeAdapter.Settings;
-using Newtonsoft.Json;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Domain.Settings
 {

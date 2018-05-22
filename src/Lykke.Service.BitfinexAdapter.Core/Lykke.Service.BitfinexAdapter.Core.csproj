@@ -14,7 +14,7 @@
   <ItemGroup>
     <PackageReference Include="Castle.Core" Version="4.2.1" />
     <PackageReference Include="Lykke.Common" Version="6.8.1" />
-    <PackageReference Include="Lykke.Common.ExchangeAdapter" Version="1.0.18" />
+    <PackageReference Include="Lykke.Common.ExchangeAdapter" Version="1.0.19" />
     <PackageReference Include="Lykke.RabbitMqBroker" Version="7.0.0" />
     <PackageReference Include="Lykke.SettingsReader" Version="2.3.1" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.11" />

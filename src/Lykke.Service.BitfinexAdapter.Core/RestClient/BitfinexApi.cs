@@ -15,6 +15,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Lykke.Common.ExchangeAdapter;
 
 namespace Lykke.Service.BitfinexAdapter.Core.RestClient
 {
@@ -39,10 +40,9 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
 
         private readonly ILog _log;
 
-
         public Uri BaseUri { get; set; }
 
-        private readonly ServiceClientCredentials _credentials;
+        private readonly BitfinexServiceClientCredentials _credentials;
 
         /// <summary>
         /// Gets or sets json serialization settings.
@@ -54,7 +54,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
         /// </summary>
         public JsonSerializerSettings DeserializationSettings { get; private set; }
 
-        public BitfinexApi(ServiceClientCredentials credentials, ILog log)
+        public BitfinexApi(BitfinexServiceClientCredentials credentials, ILog log)
         {
             _credentials = credentials;
             Initialize();
@@ -233,21 +233,24 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             return response;
         }
 
-        private async Task<T> GetRestResponse<T>(BitfinexPostBase obj, CancellationToken cancellationToken)
+        private Task<T> GetRestResponse<T>(BitfinexPostBase post, CancellationToken cancellationToken)
         {
-            using (var request = await GetRestRequest(obj, cancellationToken))
+            return EpochNonce.Lock(_credentials.ApiKey, async nonce =>
             {
-                return await SendHttpRequestAndGetResponse<T>(request, cancellationToken);
-            }
+                post.Nonce = nonce.ToString();
+                using (var request = await GetRestRequest(post, cancellationToken))
+                {
+                    return await SendHttpRequestAndGetResponse<T>(request, cancellationToken);
+                }
+            });
         }
 
-        private async Task<T> GetRestResponse<T>(BitfinexGetBase obj, CancellationToken cancellationToken)
+        private async Task<T> GetRestResponse<T>(BitfinexGetBase get, CancellationToken cancellationToken)
         {
-            using (var request = GetRestRequest(obj))
+            using (var request = GetRestRequest(get))
             {
                 return await SendHttpRequestAndGetResponse<T>(request, cancellationToken);
             }
-
         }
 
         private async Task<HttpRequestMessage> GetRestRequest(BitfinexPostBase obj, CancellationToken cancellationToken)
