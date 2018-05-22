@@ -22,6 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Lykke.Service.BitfinexAdapter.Middlewares;
 
 namespace Lykke.Service.BitfinexAdapter
 {
@@ -99,6 +100,8 @@ namespace Lykke.Service.BitfinexAdapter
                     {
                         return new ErrorModel("Technical problem", ApiErrorCode.InternalServerError);
                     });
+
+                app.UseLogPostQueriesMiddleware(Log);
 
                 app.UseMvc();
                 app.UseSwagger(c =>

@@ -1,19 +1,15 @@
 ﻿using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
-using Lykke.Service.BitfinexAdapter.Logging;
 using Lykke.Service.BitfinexAdapter.Services.Exchange;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
 using System;
 using System.Linq;
 using System.Security.Authentication;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 {
-
     [Produces("application/json")]
-    [LoggingAspNetFilter]
     public abstract class BaseApiController : Controller
     {
         protected readonly BitfinexAdapterSettings _configuration;
