@@ -286,6 +286,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
 
         private async Task<T> SendHttpRequestAndGetResponse<T>(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            _log.WriteInfo(nameof(BitfinexApi), "", await request.Content.ReadAsStringAsync());
             using (var response = await HttpClient.SendAsync(request, cancellationToken))
             {
                 try
