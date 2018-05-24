@@ -3,7 +3,6 @@ using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using System;
 using System.Globalization;
 using Lykke.Common.ExchangeAdapter.SpotController.Records;
-using MarketOrderRequest = Lykke.Service.BitfinexAdapter.Models.LimitOrders.MarketOrderRequest;
 
 namespace Lykke.Service.BitfinexAdapter.Models
 {
