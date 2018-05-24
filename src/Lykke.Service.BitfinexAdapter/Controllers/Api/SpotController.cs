@@ -12,10 +12,6 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Lykke.Common.ExchangeAdapter.SpotController.Records;
-using CancelLimitOrderRequest = Lykke.Service.BitfinexAdapter.Models.LimitOrders.CancelLimitOrderRequest;
-using CancelLimitOrderResponse = Lykke.Service.BitfinexAdapter.Models.Responses.CancelLimitOrderResponse;
-using MarketOrderRequest = Lykke.Service.BitfinexAdapter.Models.LimitOrders.MarketOrderRequest;
-using OrderIdResponse = Lykke.Service.BitfinexAdapter.Models.Responses.OrderIdResponse;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 {
@@ -156,8 +152,11 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         {
             try
             {
-                var result = await GetAuthenticatedExchange().CancelOrder(request.OrderId, TimeSpan.FromSeconds(DefaultTimeOutSeconds));
-                return Ok(new CancelLimitOrderResponse {OrderId = result } );
+                if (!long.TryParse(request.OrderId, out var orderId))
+                    return BadRequest("OrderId should be long");
+
+                var result = await GetAuthenticatedExchange().CancelOrder(orderId, TimeSpan.FromSeconds(DefaultTimeOutSeconds));
+                return Ok(new CancelLimitOrderResponse {OrderId = result.ToString(CultureInfo.InvariantCulture) } );
             }
             catch (ApiException e)
             {
