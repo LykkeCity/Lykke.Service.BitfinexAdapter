@@ -129,7 +129,12 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
         {
             foreach (var instrument in instruments)
             {
-                var request = SubscribeOrderBooksRequest.BuildRequest(instrument, "F1", "R0");
+                var request = SubscribeOrderBooksRequest.BuildRequest(
+                    instrument,
+                    "F0",
+                    "R0",
+                    SubscribeOrderBooksRequest.OrderBookLength.OneHundred);
+
                 await Messenger.SendRequestAsync(request, CancellationToken);
                 var response = await GetResponse();
                 await HandleResponse(response);
@@ -181,6 +186,12 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
         private async Task HandleResponse(OrderBookSnapshotResponse snapshot)
         {
             var pair = _channels[snapshot.ChannelId].Pair;
+            var buysCount = snapshot.Orders.Count(x => x.Amount > 0);
+            var sellsCount = snapshot.Orders.Count(x => x.Amount < 0);
+
+            Log.WriteInfo(nameof(BitfinexOrderBooksHarvester), pair, $"Received orderbooksnapshot, " +
+                                                                     $"buys: {buysCount}, " +
+                                                                     $"sells: {sellsCount}");
 
             await HandleOrderBookSnapshotAsync(pair,
                 DateTime.UtcNow, // TODO: Get this from the server

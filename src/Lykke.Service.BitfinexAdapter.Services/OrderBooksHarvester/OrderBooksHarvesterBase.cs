@@ -193,12 +193,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
                      obs.Bids.Values.Select(i => new Common.ExchangeAdapter.Contracts.OrderBookItem(i.Price, i.Size)));
             _totalOrderbooksPublishedToRabbit++;
 
-
-
-            if (orderBook.Asks.Any() || orderBook.Bids.Any())
-            {
-                await _newOrderBookHandler.Handle(orderBook);
-            }
+            await _newOrderBookHandler.Handle(orderBook);
         }
 
         protected abstract Task MessageLoopImpl();
