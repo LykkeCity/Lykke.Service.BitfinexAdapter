@@ -26,7 +26,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
     {
         private readonly BitfinexModelConverter _modelConverter;
         private readonly BitfinexApi _exchangeApi;
-        private LimitOrderRepository _snapshotStorage;
+        private readonly LimitOrderRepository _snapshotStorage;
         private readonly string _xApiKey;
 
         public BitfinexExchange(
@@ -109,22 +109,20 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
                     Type = orderType
                 };
 
+                Order order;
+
                 if (orderIdToReplace > 0)
                 {
-                    var order = await ExecuteApiMethod(_exchangeApi.ReplaceOrderAsync, newOrderRequest, cts.Token);
-
-                    await _snapshotStorage.UpdateEntity(_xApiKey, order);
-
-                    return OrderToTrade(order);
+                    order = await ExecuteApiMethod(_exchangeApi.ReplaceOrderAsync, newOrderRequest, cts.Token);
                 }
                 else
                 {
-                    var order = await ExecuteApiMethod(_exchangeApi.AddOrderAsync, newOrderRequest, cts.Token);
-
-                    await _snapshotStorage.CreateNewEntity(_xApiKey, order);
-
-                    return OrderToTrade(order);
+                    order = await ExecuteApiMethod(_exchangeApi.AddOrderAsync, newOrderRequest, cts.Token);
                 }
+
+                await _snapshotStorage.CreateNewEntity(_xApiKey, order);
+
+                return OrderToTrade(order);
             }
         }
 
