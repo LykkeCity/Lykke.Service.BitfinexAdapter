@@ -1,4 +1,13 @@
-﻿using Common.Log;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Net.Http;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Common.Log;
+using Lykke.Common.ExchangeAdapter;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.JsonConverters;
 using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
@@ -7,15 +16,6 @@ using Lykke.Service.BitfinexAdapter.Core.Utils;
 using Microsoft.Rest;
 using Microsoft.Rest.Serialization;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Net.Http;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Lykke.Common.ExchangeAdapter;
 using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.BitfinexAdapter.Core.RestClient
@@ -126,7 +126,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
 
         public async Task<Order> ReplaceOrderAsync(NewOrderRequest orderRequest, CancellationToken cancellationToken = default)
         {
-            var newOrder = new BitfinexReplaceOrderPost()
+            var newOrder = new BitfinexReplaceOrderPost
             {
                 OrderIdToReplace = orderRequest.OrderIdToReplace,
                 Symbol = orderRequest.Symbol,
@@ -275,7 +275,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
                 RequestUri = new Uri(BaseUri, obj.Request)
             };
 
-            var jsonObj = SafeJsonConvert.SerializeObject((object)obj, (JsonSerializerSettings)SerializationSettings);
+            var jsonObj = SafeJsonConvert.SerializeObject(obj, SerializationSettings);
             httpRequest.Content = new StringContent(jsonObj, Encoding.UTF8, "application/json");
 
             await _credentials.ProcessHttpRequestAsync(httpRequest, cancellationToken).ConfigureAwait(false);
