@@ -15,7 +15,7 @@ using Lykke.SettingsReader;
 namespace Lykke.Service.BitfinexAdapter.AzureRepositories
 {
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateAlways)]
-    internal sealed class LimitOrderEntity : AzureTableEntity, IOrder
+    public sealed class LimitOrderEntity : AzureTableEntity, IOrder
     {
         public string XApiKey { get; set; }
         public long Id { get; set; }
@@ -73,13 +73,9 @@ namespace Lykke.Service.BitfinexAdapter.AzureRepositories
         private readonly INoSQLTableStorage<LimitOrderEntity> _storage;
 
         public LimitOrderRepository(
-            IReloadingManager<BitfinexAdapterSettings> connectionString,
-            ILog log)
+            INoSQLTableStorage<LimitOrderEntity> storage)
         {
-            _storage = AzureTableStorage<LimitOrderEntity>.Create(
-                connectionString.ConnectionString(x => x.SnapshotConnectionString),
-                "BitfinexLimitOrders",
-                log);
+            _storage = storage;
         }
 
         public Task CreateNewEntity(string xApiKey, Order order)

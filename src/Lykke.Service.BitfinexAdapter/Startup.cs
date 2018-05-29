@@ -49,10 +49,7 @@ namespace Lykke.Service.BitfinexAdapter
         {
             try
             {
-                services.AddMvc(options =>
-                    {
-                        options.Filters.Add<ValidateModelAttribute>();
-                    })
+                services.AddMvc(options => { options.Filters.Add<ValidateModelAttribute>(); })
                     .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Startup>())
                     .AddJsonOptions(options =>
                     {
@@ -74,14 +71,13 @@ namespace Lykke.Service.BitfinexAdapter
                 ApiKeyAuthAttribute.ClientApiKeys = appSettings.CurrentValue.BitfinexAdapterService.Credentials
                     .ToDictionary(x => x.InternalApiKey);
 
-                builder
-                    .RegisterType<LimitOrderRepository>()
-                    .WithParameter(
-                        new TypedParameter(
-                            typeof(IReloadingManager<BitfinexAdapterSettings>),
-                            appSettings.Nested(x => x.BitfinexAdapterService)))
-                    .AsSelf()
-                    .SingleInstance();
+                builder.RegisterInstance(
+                        new LimitOrderRepository(AzureTableStorage<LimitOrderEntity>.Create(
+                            appSettings.ConnectionString(x => x.BitfinexAdapterService.SnapshotConnectionString),
+                            "BitfinexLimitOrders",
+                            Log)))
+                    .SingleInstance()
+                    .AsSelf();
 
                 builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x), Log));
                 builder.Populate(services);
