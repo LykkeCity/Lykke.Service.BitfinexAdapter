@@ -24,7 +24,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
         private readonly Dictionary<long, Channel> _channels;
         private readonly IHandler<TickPrice> _tickPriceHandler;
         private readonly IThrottling _tickPriceThrottler;
-        private readonly IBitfinexApi _exchangeApi;
+        private readonly BitfinexApi _exchangeApi;
 
         public BitfinexOrderBooksHarvester(BitfinexAdapterSettings configuration,
             IHandler<OrderBook> orderBookHandler,
@@ -178,8 +178,9 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             throw new InvalidOperationException($"Event: {response.Event} Code: {response.Code} Message: {response.Message}");
         }
 
-        private async Task HandleResponse(HeartbeatResponse heartbeat)
+        private Task HandleResponse(HeartbeatResponse heartbeat)
         {
+            return Task.FromResult(0);
             //await Log.WriteInfoAsync(nameof(HandleResponse), $"Bitfinex channel {_channels[heartbeat.ChannelId].Pair} heartbeat", string.Empty);
         }
 

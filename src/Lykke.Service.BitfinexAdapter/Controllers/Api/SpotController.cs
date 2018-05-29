@@ -10,8 +10,10 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Lykke.Common.ExchangeAdapter.SpotController.Records;
+using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 {
@@ -127,7 +129,10 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
         {
             try
             {
-                var result = await GetAuthenticatedExchange().AddOrderAndWaitExecution(request.ToLimitOrder(false), TimeSpan.FromSeconds(DefaultTimeOutSeconds));
+                var result = await GetAuthenticatedExchange().AddOrderAndWaitExecution(
+                    request.ToLimitOrder(false),
+                    TimeSpan.FromSeconds(DefaultTimeOutSeconds));
+
                 return Ok(new OrderIdResponse {OrderId = result.ExchangeOrderId.ToString() });
             }
             catch (ApiException ex)
@@ -264,5 +269,13 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
                 return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorModel(e.Message, e.ErrorCode));
             }
         }
+
+        [SwaggerOperation("GetFees")]
+        [HttpGet("getFees")]
+        public Task<Fees> GetFees(CancellationToken ct)
+        {
+            return GetAuthenticatedExchange().GetFees(ct);
+        }
+
     }
 }

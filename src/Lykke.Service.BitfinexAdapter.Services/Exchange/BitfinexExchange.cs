@@ -25,7 +25,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
     public class BitfinexExchange : ExchangeBase
     {
         private readonly BitfinexModelConverter _modelConverter;
-        private readonly IBitfinexApi _exchangeApi;
+        private readonly BitfinexApi _exchangeApi;
 
         public BitfinexExchange(
             BitfinexAdapterSettings configuration,
@@ -80,7 +80,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             }
         }
 
-        public override async Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout, long orderIdToReplace)
+        public override async Task<ExecutionReport> AddOrderAndWaitExecution(TradingSignal signal, TimeSpan timeout, long orderIdToReplace = 0)
         {
             var symbol = _modelConverter.LykkeSymbolToExchangeSymbol(signal.Instrument.Name);
             var volume = signal.Volume;
@@ -230,6 +230,12 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
                 var response = await ExecuteApiMethod(_exchangeApi.GetMarginInformationAsync, cts.Token); 
                 return response;
             }
+        }
+
+        public async Task<Fees> GetFees(CancellationToken ct = default)
+        {
+            var response = await ExecuteApiMethod(_exchangeApi.GetFees, ct);
+            return response;
         }
 
         private static IReadOnlyCollection<MarginBalanceDomain> MarginInfoToBalance(IReadOnlyList<MarginInfo> marginInfos)

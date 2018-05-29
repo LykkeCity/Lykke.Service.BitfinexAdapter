@@ -22,7 +22,7 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
             _log = log;
         }
 
-        protected ExchangeBase GetAuthenticatedExchange()
+        protected BitfinexExchange GetAuthenticatedExchange()
         {
             if (Request.Headers.TryGetValue(Constants.XApiKeyHeaderName, out var clientXapiKey))
             {

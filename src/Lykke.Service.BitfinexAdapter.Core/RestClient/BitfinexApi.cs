@@ -16,10 +16,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Lykke.Common.ExchangeAdapter;
+using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.BitfinexAdapter.Core.RestClient
 {
-    public sealed class BitfinexApi : ServiceClient<BitfinexApi>, IBitfinexApi
+    public sealed class BitfinexApi : ServiceClient<BitfinexApi>
     {
         private const string BalanceRequestUrl = @"/v1/balances";
         private const string NewOrderRequestUrl = @"/v1/order/new";
@@ -110,6 +111,17 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             var response = await GetRestResponse<Order>(newOrder, cancellationToken);
 
             return response;
+        }
+
+        public async Task<Fees> GetFees(CancellationToken ct = default)
+        {
+            var request = new BitfinexPostBase
+            {
+                Request = "/v1/account_fees"
+            };
+
+            var response = await GetRestResponse<JToken>(request, ct);
+            return response.ToObject<Fees>();
         }
 
         public async Task<Order> ReplaceOrderAsync(NewOrderRequest orderRequest, CancellationToken cancellationToken = default)
@@ -305,13 +317,20 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
 
         private async Task<T> CheckError<T>(HttpResponseMessage response)
         {
+            var responseAsString = await response.Content.ReadAsStringAsync();
+
             if (response.IsSuccessStatusCode)
             {
-                return JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync(), DeserializationSettings);
+                return JsonConvert.DeserializeObject<T>(responseAsString, DeserializationSettings);
             }
 
-            var error = JsonConvert.DeserializeObject<Error>(await response.Content.ReadAsStringAsync(), DeserializationSettings);
-            throw new ApiException(error.Message, response.StatusCode);
+            var error = JsonConvert.DeserializeObject<Error>(responseAsString, DeserializationSettings);
+
+            if (error == null)
+            {
+                throw new ApiException(responseAsString, response.StatusCode);
+            }
+            throw new ApiException(responseAsString, response.StatusCode);
         }
 
         private sealed class StringDecimalConverter : JsonConverter
