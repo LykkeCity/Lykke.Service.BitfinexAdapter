@@ -22,6 +22,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Lykke.Service.BitfinexAdapter.AzureRepositories;
+using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Middlewares;
 
 namespace Lykke.Service.BitfinexAdapter
@@ -71,6 +73,15 @@ namespace Lykke.Service.BitfinexAdapter
 
                 ApiKeyAuthAttribute.ClientApiKeys = appSettings.CurrentValue.BitfinexAdapterService.Credentials
                     .ToDictionary(x => x.InternalApiKey);
+
+                builder
+                    .RegisterType<LimitOrderRepository>()
+                    .WithParameter(
+                        new TypedParameter(
+                            typeof(IReloadingManager<BitfinexAdapterSettings>),
+                            appSettings.Nested(x => x.BitfinexAdapterService)))
+                    .AsSelf()
+                    .SingleInstance();
 
                 builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x), Log));
                 builder.Populate(services);

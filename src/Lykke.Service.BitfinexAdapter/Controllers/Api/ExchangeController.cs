@@ -6,13 +6,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Lykke.Service.BitfinexAdapter.AzureRepositories;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 {
     [Route("exchange")]
     public class ExchangeController : BaseApiController
     {
-        public ExchangeController(BitfinexAdapterSettings settings, ILog log) : base(settings, log)
+        public ExchangeController(BitfinexAdapterSettings settings, LimitOrderRepository lor, ILog log)
+            : base(settings, lor, log)
         {
         }
 

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
 using System.Security.Authentication;
+using Lykke.Service.BitfinexAdapter.AzureRepositories;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 {
@@ -13,12 +14,17 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
     public abstract class BaseApiController : Controller
     {
         protected readonly BitfinexAdapterSettings _configuration;
+        private readonly LimitOrderRepository _limitOrderRepository;
         protected readonly ILog _log;
         protected int DefaultTimeOutSeconds = 30;
 
-        public BaseApiController(BitfinexAdapterSettings configuration, ILog log)
+        public BaseApiController(
+            BitfinexAdapterSettings configuration,
+            LimitOrderRepository limitOrderRepository,
+            ILog log)
         {
             _configuration = configuration;
+            _limitOrderRepository = limitOrderRepository;
             _log = log;
         }
 
@@ -31,7 +37,12 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 
                 if (creds != null)
                 {
-                    return new BitfinexExchange(_configuration, creds.ApiKey, creds.ApiSecret, _log);
+                    return new BitfinexExchange(
+                        _configuration,
+                        _limitOrderRepository,
+                        clientXapiKey,
+                        creds.ApiKey,
+                        creds.ApiSecret, _log);
                 }
             }
 
@@ -40,7 +51,12 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 
         protected ExchangeBase GetUnAuthenticatedExchange()
         {
-            return new BitfinexExchange(_configuration, String.Empty, String.Empty, _log);
+            return new BitfinexExchange(
+                _configuration,
+                _limitOrderRepository,
+                "<anonymous>",
+                String.Empty,
+                String.Empty, _log);
         }
 
         

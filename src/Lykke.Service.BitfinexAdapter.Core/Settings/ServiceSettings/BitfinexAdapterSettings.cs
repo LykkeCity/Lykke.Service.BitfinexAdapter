@@ -32,5 +32,8 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Settings
         public int MaxEventPerSecondByInstrument { get; set; }
 
         public IReadOnlyCollection<CurrencySymbol> SupportedCurrencySymbols { get; set; }
+
+        [AzureTableCheck]
+        public string SnapshotConnectionString { get; set; }
     }
 }

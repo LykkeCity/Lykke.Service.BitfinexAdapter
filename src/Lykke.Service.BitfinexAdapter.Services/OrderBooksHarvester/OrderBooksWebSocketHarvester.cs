@@ -1,6 +1,5 @@
 ﻿using Common.Log;
 using Lykke.Common.ExchangeAdapter.Contracts;
-using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Handlers;
 using Lykke.Service.BitfinexAdapter.Core.Throttling;

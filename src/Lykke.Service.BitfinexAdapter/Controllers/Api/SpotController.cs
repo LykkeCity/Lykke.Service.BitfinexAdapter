@@ -1,4 +1,4 @@
-﻿using Common.Log;
+using Common.Log;
 using Lykke.Service.BitfinexAdapter.Authentication;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
@@ -13,6 +13,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Lykke.Common.ExchangeAdapter.SpotController.Records;
+using Lykke.Service.BitfinexAdapter.AzureRepositories;
 using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
@@ -21,7 +22,8 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
     [Route("spot")]
     public class SpotController : BaseApiController
     {
-        public SpotController(BitfinexAdapterSettings configuration, ILog log) : base(configuration, log)
+        public SpotController(BitfinexAdapterSettings configuration, LimitOrderRepository lor, ILog log)
+            : base(configuration, lor, log)
         {
         }
 

@@ -1,4 +1,4 @@
-﻿using Common.Log;
+using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
 using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
@@ -15,7 +15,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Lykke.Common.ExchangeAdapter.SpotController.Records;
+using Lykke.Service.BitfinexAdapter.AzureRepositories;
 using Order = Lykke.Service.BitfinexAdapter.Core.Domain.RestClient.Order;
 
 //using Position = Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Position;
@@ -26,16 +26,25 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
     {
         private readonly BitfinexModelConverter _modelConverter;
         private readonly BitfinexApi _exchangeApi;
+        private LimitOrderRepository _snapshotStorage;
+        private readonly string _xApiKey;
 
         public BitfinexExchange(
             BitfinexAdapterSettings configuration,
+            LimitOrderRepository snapshotStorage,
+            string xApiKey,
             string apiKey,
             string secret,
             ILog log)
             : base(Constants.BitfinexExchangeName, configuration, log)
         {
             _modelConverter = new BitfinexModelConverter(configuration);
-            var credenitals = new BitfinexServiceClientCredentials(apiKey, secret); 
+            var credenitals = new BitfinexServiceClientCredentials(apiKey, secret);
+
+            _snapshotStorage = snapshotStorage;
+
+            _xApiKey = xApiKey;
+
             _exchangeApi = new BitfinexApi(credenitals, log)
             {
                 BaseUri = new Uri(configuration.EndpointUrl)
@@ -100,11 +109,22 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
                     Type = orderType
                 };
 
-                var newOrderResponse = orderIdToReplace > 0 ?  await ExecuteApiMethod(_exchangeApi.ReplaceOrderAsync, newOrderRequest, cts.Token) : 
-                                                               await ExecuteApiMethod(_exchangeApi.AddOrderAsync, newOrderRequest, cts.Token); 
+                if (orderIdToReplace > 0)
+                {
+                    var order = await ExecuteApiMethod(_exchangeApi.ReplaceOrderAsync, newOrderRequest, cts.Token);
 
-                var trade = OrderToTrade(newOrderResponse);
-                return trade;
+                    await _snapshotStorage.UpdateEntity(_xApiKey, order);
+
+                    return OrderToTrade(order);
+                }
+                else
+                {
+                    var order = await ExecuteApiMethod(_exchangeApi.AddOrderAsync, newOrderRequest, cts.Token);
+
+                    await _snapshotStorage.CreateNewEntity(_xApiKey, order);
+
+                    return OrderToTrade(order);
+                }
             }
         }
 
@@ -128,6 +148,8 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
                 {
                     throw new ApiException("Requested order id and type not found.", HttpStatusCode.NotFound);
                 }
+
+                await _snapshotStorage.UpdateEntity(_xApiKey, order);
 
                 var trade = OrderToTrade(order);
                 return trade;
@@ -266,7 +288,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             var orderPrice = order.Price;
             var originalVolume = order.OriginalAmount;
             var tradeType = BitfinexModelConverter.ConvertTradeType(order.TradeType);
-            var status = ConvertExecutionStatus(order);
+            var status = order.ConvertOrderStatus();
 
             return new ExecutionReport(new Instrument(order.Symbol), execTime, orderPrice, originalVolume, order.ExecutedAmount, tradeType, id, status, order.OrderType, order.AvgExecutionPrice)
             {
@@ -286,19 +308,5 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
         {
 
         }
-
-        private static OrderStatus ConvertExecutionStatus(Order order)
-        {
-            if (order.IsCancelled)
-            {
-                return OrderStatus.Canceled;
-            }
-            if (order.IsLive)
-            {
-                return OrderStatus.Active;
-            }
-            return OrderStatus.Fill;
-        }
-
     }
 }

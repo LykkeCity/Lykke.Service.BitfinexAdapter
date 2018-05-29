@@ -2,7 +2,6 @@
 using Autofac.Extensions.DependencyInjection;
 using Common;
 using Common.Log;
-using Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Handlers;
 using Lykke.Service.BitfinexAdapter.Core.Services;

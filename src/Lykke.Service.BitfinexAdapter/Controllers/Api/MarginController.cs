@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Lykke.Service.BitfinexAdapter.AzureRepositories;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 {
@@ -15,7 +16,8 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
     [ApiKeyAuth]
     public class MarginController : BaseApiController
     {
-        public MarginController(BitfinexAdapterSettings configuration, ILog log) : base(configuration, log)
+        public MarginController(BitfinexAdapterSettings configuration, LimitOrderRepository lor, ILog log)
+            : base(configuration, lor, log)
         {
         }
 

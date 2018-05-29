@@ -3,7 +3,7 @@ using System;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Domain.RestClient
 {
-    public sealed class Order
+    public sealed class Order : IOrder
     {
         [JsonProperty("id")]
         public long Id { get; set; }
@@ -25,6 +25,13 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.RestClient
 
         [JsonProperty("type")]
         public string OrderType { get; set; }
+
+        [JsonIgnore]
+        DateTimeOffset IOrder.Timestamp
+        {
+            get => new DateTimeOffset(Timestamp);
+            set => Timestamp = value.DateTime;
+        }
 
         [JsonProperty("timestamp")]
         public DateTime Timestamp { get; set; }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using Common;
@@ -8,8 +7,6 @@ using Common.Log;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
-using Microsoft.Extensions.Configuration.EnvironmentVariables;
-using MoreLinq;
 
 namespace Lykke.Service.BitfinexAdapter.Middlewares
 {
