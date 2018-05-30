@@ -33,7 +33,5 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Settings
 
         public IReadOnlyCollection<CurrencySymbol> SupportedCurrencySymbols { get; set; }
 
-        [AzureTableCheck]
-        public string SnapshotConnectionString { get; set; }
     }
 }

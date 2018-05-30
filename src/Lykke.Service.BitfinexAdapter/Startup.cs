@@ -73,7 +73,7 @@ namespace Lykke.Service.BitfinexAdapter
 
                 builder.RegisterInstance(
                         new LimitOrderRepository(AzureTableStorage<LimitOrderEntity>.Create(
-                            appSettings.ConnectionString(x => x.BitfinexAdapterService.SnapshotConnectionString),
+                            appSettings.ConnectionString(x => x.BitfinexAdapterService.Db.SnapshotConnectionString),
                             "BitfinexLimitOrders",
                             Log)))
                     .SingleInstance()
