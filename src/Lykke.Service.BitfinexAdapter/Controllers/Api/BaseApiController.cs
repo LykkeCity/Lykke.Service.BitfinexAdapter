@@ -14,13 +14,13 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
     public abstract class BaseApiController : Controller
     {
         protected readonly BitfinexAdapterSettings _configuration;
-        private readonly LimitOrderRepository _limitOrderRepository;
+        private readonly ILimitOrderRepository _limitOrderRepository;
         protected readonly ILog _log;
         protected int DefaultTimeOutSeconds = 30;
 
         public BaseApiController(
             BitfinexAdapterSettings configuration,
-            LimitOrderRepository limitOrderRepository,
+            ILimitOrderRepository limitOrderRepository,
             ILog log)
         {
             _configuration = configuration;

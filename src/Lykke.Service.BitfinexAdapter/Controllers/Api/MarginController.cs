@@ -16,7 +16,7 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
     [ApiKeyAuth]
     public class MarginController : BaseApiController
     {
-        public MarginController(BitfinexAdapterSettings configuration, LimitOrderRepository lor, ILog log)
+        public MarginController(BitfinexAdapterSettings configuration, ILimitOrderRepository lor, ILog log)
             : base(configuration, lor, log)
         {
         }

@@ -77,6 +77,7 @@ namespace Lykke.Service.BitfinexAdapter
                             "BitfinexLimitOrders",
                             Log)))
                     .SingleInstance()
+                    .As<ILimitOrderRepository>()
                     .AsSelf();
 
                 builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x), Log));

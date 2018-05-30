@@ -22,7 +22,7 @@ namespace Lykke.Service.BitfinexAdapter.Controllers.Api
     [Route("spot")]
     public class SpotController : BaseApiController
     {
-        public SpotController(BitfinexAdapterSettings configuration, LimitOrderRepository lor, ILog log)
+        public SpotController(BitfinexAdapterSettings configuration, ILimitOrderRepository lor, ILog log)
             : base(configuration, lor, log)
         {
         }

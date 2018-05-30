@@ -26,12 +26,12 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
     {
         private readonly BitfinexModelConverter _modelConverter;
         private readonly BitfinexApi _exchangeApi;
-        private readonly LimitOrderRepository _snapshotStorage;
+        private readonly ILimitOrderRepository _snapshotStorage;
         private readonly string _xApiKey;
 
         public BitfinexExchange(
             BitfinexAdapterSettings configuration,
-            LimitOrderRepository snapshotStorage,
+            ILimitOrderRepository snapshotStorage,
             string xApiKey,
             string apiKey,
             string secret,
