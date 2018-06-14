@@ -254,7 +254,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
                 {
                     return await SendHttpRequestAndGetResponse<T>(request, cancellationToken);
                 }
-            });
+            }, LockKind.EpochMilliseconds);
         }
 
         private async Task<T> GetRestResponse<T>(BitfinexGetBase get, CancellationToken cancellationToken)
