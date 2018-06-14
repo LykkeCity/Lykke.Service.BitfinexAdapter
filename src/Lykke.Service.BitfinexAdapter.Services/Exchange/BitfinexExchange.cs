@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -60,12 +61,12 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
             }
             catch (ApiException ex)
             {
-                await LykkeLog.WriteErrorAsync(nameof(BitfinexExchange), method.Method.Name, request.ToString(), ex);
+                await LykkeLog.WriteInfoAsync(nameof(BitfinexExchange), method.Method.Name, request.ToString(), ex.Message);
                 throw;
             }
             catch (Exception ex)
             {
-                await LykkeLog.WriteErrorAsync(nameof(BitfinexExchange), method.Method.Name, request.ToString(), ex );
+                await LykkeLog.WriteWarningAsync(nameof(BitfinexExchange), method.Method.Name, request.ToString(), ex );
                 throw new ApiException(ex.Message, HttpStatusCode.InternalServerError);
             }
         }
@@ -130,8 +131,21 @@ namespace Lykke.Service.BitfinexAdapter.Services.Exchange
         {
             using (var cts = new CancellationTokenSource(timeout))
             {
-                var response = await ExecuteApiMethod(_exchangeApi.CancelOrderAsync, orderId, cts.Token);
-                return response.Id;
+                try
+                {
+                    var response = await ExecuteApiMethod(_exchangeApi.CancelOrderAsync, orderId, cts.Token);
+                    return response.Id;
+                }
+                catch (ApiException ex)
+                {
+                    if (ex.Message == "Order could not be cancelled.")
+                    {
+                        LykkeLog.WriteInfo(nameof(BitfinexExchange), null, ex.Message);
+                        return orderId;
+                    }
+
+                    throw;
+                }
             }
         }
 

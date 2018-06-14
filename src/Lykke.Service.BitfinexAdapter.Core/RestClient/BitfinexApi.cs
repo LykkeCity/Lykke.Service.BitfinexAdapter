@@ -302,16 +302,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             _log.WriteInfo(nameof(BitfinexApi), "", content);
             using (var response = await HttpClient.SendAsync(request, cancellationToken))
             {
-                try
-                {
-                    var responseBody = await CheckError<T>(response);
-                    return responseBody;
-                }
-                catch (Exception e)
-                {
-                    await _log.WriteErrorAsync(nameof(BitfinexApi), request.RequestUri.AbsoluteUri, e);
-                    throw;
-                }
+                return await CheckError<T>(response);
             }
         }
 
@@ -330,7 +321,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.RestClient
             {
                 throw new ApiException(responseAsString, response.StatusCode);
             }
-            throw new ApiException(responseAsString, response.StatusCode);
+            throw new ApiException(error.Message, response.StatusCode);
         }
 
         private sealed class StringDecimalConverter : JsonConverter
