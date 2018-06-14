@@ -27,7 +27,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
         private readonly ExchangeConverters _converters;
         private readonly Timer _heartBeatMonitoringTimer;
         private readonly IThrottling _orderBooksThrottler;
-        protected TimeSpan HeartBeatPeriod { get; set; } = TimeSpan.FromSeconds(30);
+        private TimeSpan HeartBeatPeriod { get; set; } = TimeSpan.FromSeconds(30);
         private readonly TimeSpan _snapshotRefreshPeriod = TimeSpan.FromSeconds(5);
         private CancellationTokenSource _cancellationTokenSource;
         private Task _messageLoopTask;
@@ -39,7 +39,9 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
         private volatile bool _restartInProgress;
         private volatile bool _snapshotRefreshScheduled;
 
-        protected BitfinexAdapterSettings AdapterSettings { get; }
+        private readonly OrderbookDeduplicator _orderBookDeduplicator;
+
+        private BitfinexAdapterSettings AdapterSettings { get; }
         
         protected OrderBooksHarvesterBase(BitfinexAdapterSettings adapterSettings, ILog log,
             IHandler<OrderBook> newOrderBookHandler,
@@ -49,6 +51,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             _newOrderBookHandler = newOrderBookHandler;
 
             Log = log.CreateComponentScope(GetType().Name);
+            _orderBookDeduplicator = new OrderbookDeduplicator(Log);
 
             _converters = new ExchangeConverters(adapterSettings.SupportedCurrencySymbols, adapterSettings.UseSupportedCurrencySymbolsAsFilter);
 
@@ -185,6 +188,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
             }
 
             var obs = _orderBookSnapshots[pair];
+
             var orderBook = new OrderBook(
                      Constants.BitfinexExchangeName,
                      _converters.ExchangeSymbolToLykkeInstrument(obs.AssetPair).Name,
@@ -192,6 +196,11 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester
                      obs.Asks.Values.Select(i => new Common.ExchangeAdapter.Contracts.OrderBookItem(i.Price, i.Size)),
                      obs.Bids.Values.Select(i => new Common.ExchangeAdapter.Contracts.OrderBookItem(i.Price, i.Size)));
             _totalOrderbooksPublishedToRabbit++;
+
+            if (!_orderBookDeduplicator.IsOkToPublish(pair, orderBook))
+            {
+                return;
+            }
 
             await _newOrderBookHandler.Handle(orderBook);
         }
