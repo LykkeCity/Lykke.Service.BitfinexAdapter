@@ -2,7 +2,6 @@
 {
     public enum WsChannel
     {
-        book,
-        ticker
+        book
     }
 }

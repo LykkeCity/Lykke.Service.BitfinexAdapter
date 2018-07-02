@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient
 {
-    public sealed class AuthintificateRequest : SubscribeRequest
+    public sealed class AuthenticateRequest : SubscribeRequest
     {
         private static long _nonceSeed;
 
@@ -22,13 +22,13 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient
         [JsonProperty("authPayload")]
         public string AuthPayload { get; set; }
 
-        public static AuthintificateRequest BuildRequest(string apiKey, string apiSecret)
+        public static AuthenticateRequest BuildRequest(string apiKey, string apiSecret)
         {
             var nonce = DateTime.UtcNow.Ticks + Interlocked.Increment(ref _nonceSeed);
             var payLoad = "AUTH" + nonce;
             var sig = GetHexHashSignature(payLoad, apiSecret);
 
-            return new AuthintificateRequest
+            return new AuthenticateRequest
             {
                 ApiKey = apiKey,
                 AuthSig = sig,

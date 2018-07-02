@@ -3,10 +3,8 @@ using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading.Enums;
 using Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient;
 using System;
-using System.Globalization;
 using Lykke.Common.ExchangeAdapter.Contracts;
 using Lykke.Common.ExchangeAdapter.SpotController.Records;
-using OrderBookItem = Lykke.Service.BitfinexAdapter.Core.Domain.OrderBooks.OrderBookItem;
 
 namespace Lykke.Service.BitfinexAdapter.Core.Utils
 {
@@ -15,18 +13,6 @@ namespace Lykke.Service.BitfinexAdapter.Core.Utils
 
         public BitfinexModelConverter(BitfinexAdapterSettings configuration) : base(configuration.SupportedCurrencySymbols, configuration.UseSupportedCurrencySymbolsAsFilter)
         {
-        }
-
-        public static OrderBookItem ToOrderBookItem(OrderBookItemResponse response)
-        {
-            return new OrderBookItem
-            {
-                Id = response.Id.ToString(CultureInfo.InvariantCulture),
-                IsBuy = response.Amount > 0,
-                Price = response.Price,
-                Symbol = response.Pair,
-                Size = response.Amount
-            };
         }
 
         public ExecutionReport ToOrderStatusUpdate(TradeExecutionUpdate eu)

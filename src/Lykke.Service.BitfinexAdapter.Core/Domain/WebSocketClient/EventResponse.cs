@@ -11,7 +11,11 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient
 
         public static EventResponse Parse(string json)
         {
-            var token = JToken.Parse(json);
+            return Parse(JToken.Parse(json));
+        }
+
+        public static EventResponse Parse(JToken token)
+        {
             if (token.Type == JTokenType.Array || token.All(t => t.Path != "event"))
             {
                 return null;
@@ -23,26 +27,26 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient
             switch (eventType)
             {
                 case PongResponse.Tag:
-                    response = JsonConvert.DeserializeObject<PongResponse>(json);
+                    response = token.ToObject<PongResponse>();
                     break;
                 case "auth":
-                    response = JsonConvert.DeserializeObject<AuthMessageResponse>(json);
+                    response = token.ToObject<AuthMessageResponse>();
                     break;
                 case "error":
-                    response = JsonConvert.DeserializeObject<ErrorEventMessageResponse>(json);
+                    response = token.ToObject<ErrorEventMessageResponse>();
                     break;
                 case "info":
                     if (token.Any(t => t.Path == "code"))
                     {
-                        response = JsonConvert.DeserializeObject<EventMessageResponse>(json);
+                        response = token.ToObject<EventMessageResponse>();
                     }
                     else
                     {
-                        response = JsonConvert.DeserializeObject<InfoResponse>(json);
+                        response = token.ToObject<InfoResponse>();
                     }
                     break;
                 case "subscribed":
-                    response = JsonConvert.DeserializeObject<SubscribedResponse>(json);
+                    response = token.ToObject<SubscribedResponse>();
                     break;
             }
             return response;

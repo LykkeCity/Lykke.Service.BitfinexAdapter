@@ -1,24 +1,21 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Common;
 using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Handlers;
 using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Core.Settings;
 using Lykke.Service.BitfinexAdapter.Core.Settings.ServiceSettings;
-using Lykke.Service.BitfinexAdapter.Core.Throttling;
 using Lykke.Service.BitfinexAdapter.Core.Utils;
 using Lykke.Service.BitfinexAdapter.Core.WebSocketClient;
 using Lykke.Service.BitfinexAdapter.Services;
 using Lykke.Service.BitfinexAdapter.Services.Exchange;
 using Lykke.Service.BitfinexAdapter.Services.ExecutionHarvester;
-using Lykke.Service.BitfinexAdapter.Services.OrderBooksHarvester;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using Lykke.Common.ExchangeAdapter.Contracts;
-using TickPrice = Lykke.Service.BitfinexAdapter.Core.Domain.Trading.TickPrice;
+using Lykke.Service.BitfinexAdapter.Services.OrderBooks;
+using Microsoft.Extensions.Hosting;
 
 namespace Lykke.Service.BitfinexAdapter.Modules
 {
@@ -40,10 +37,6 @@ namespace Lykke.Service.BitfinexAdapter.Modules
         protected override void Load(ContainerBuilder builder)
         {
             // TODO: Do not register entire settings in container, pass necessary settings to services which requires them
-            // ex:
-            //  builder.RegisterType<QuotesPublisher>()
-            //      .As<IQuotesPublisher>()
-            //      .WithParameter(TypedParameter.From(_settings.CurrentValue.QuotesPublication))
 
             builder.RegisterInstance(_log)
                 .As<ILog>()
@@ -53,18 +46,7 @@ namespace Lykke.Service.BitfinexAdapter.Modules
                 .As<IHealthService>()
                 .SingleInstance();
 
-            builder.RegisterType<StartupManager>()
-                .As<IStartupManager>();
-
-            builder.RegisterType<ShutdownManager>()
-                .As<IShutdownManager>();
-
             builder.RegisterGeneric(typeof(RabbitMqHandler<>));
-
-            builder.RegisterType<BitfinexOrderBooksHarvester>()
-                .AsSelf()
-                .As<IStopable>()
-                .SingleInstance();
 
             builder.RegisterType<BitfinexModelConverter>().SingleInstance();
 
@@ -72,20 +54,11 @@ namespace Lykke.Service.BitfinexAdapter.Modules
 
             builder.RegisterType<BitfinexExchange>().As<ExchangeBase>().SingleInstance();
 
-            RegisterRabbitMqHandler<TickPrice>(builder, _settings.CurrentValue.BitfinexAdapterService.RabbitMq.TickPrices, "tickHandler");
             RegisterRabbitMqHandler<ExecutionReport>(builder, _settings.CurrentValue.BitfinexAdapterService.RabbitMq.Trades);
-            RegisterRabbitMqHandler<OrderBook>(builder, _settings.CurrentValue.BitfinexAdapterService.RabbitMq.OrderBooks, "orderBookHandler");
 
-            builder.RegisterType<TickPriceHandlerDecorator>()
-                .WithParameter((info, context) => info.Name == "rabbitMqHandler",
-                    (info, context) => context.ResolveNamed<IHandler<TickPrice>>("tickHandler"))
-                .SingleInstance()
-                .As<IHandler<TickPrice>>();
-
-            builder.RegisterType<EventsPerSecondPerInstrumentThrottlingManager>()
-                .WithParameter("maxEventPerSecondByInstrument", _settings.CurrentValue.BitfinexAdapterService.MaxEventPerSecondByInstrument)
-                .As<IThrottling>().InstancePerDependency();
-
+            builder.RegisterType<OrderBooksPublishingService>()
+                .As<IHostedService>()
+                .SingleInstance();
 
             RegisterExecutionHarvesterForEachClient(builder);
             builder.Populate(_services);
@@ -100,7 +73,7 @@ namespace Lykke.Service.BitfinexAdapter.Modules
                     var socketSubscriber = new BitfinexWebSocketSubscriber(_settings.CurrentValue.BitfinexAdapterService, true, _log, clientApiKeySecret.ApiKey, clientApiKeySecret.ApiSecret);
                     builder.RegisterType<BitfinexExecutionHarvester>()
                         .AsSelf()
-                        .As<IStopable>()
+                        .As<IHostedService>()
                         .WithParameter("socketSubscriber", socketSubscriber)
                         .Named<BitfinexExecutionHarvester>(clientApiKeySecret.ApiKey).SingleInstance();
                 }

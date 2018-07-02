@@ -1,4 +1,4 @@
-﻿using Common;
+﻿using System.Threading;
 using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Trading;
 using Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient;
@@ -6,10 +6,11 @@ using Lykke.Service.BitfinexAdapter.Core.Handlers;
 using Lykke.Service.BitfinexAdapter.Core.Utils;
 using Lykke.Service.BitfinexAdapter.Core.WebSocketClient;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
 namespace Lykke.Service.BitfinexAdapter.Services.ExecutionHarvester
 {
-    public sealed class BitfinexExecutionHarvester : IStopable
+    public sealed class BitfinexExecutionHarvester : IHostedService
     {
         private readonly IBitfinexWebSocketSubscriber _socketSubscriber;
         private readonly BitfinexModelConverter _bitfinexModelConverter;
@@ -39,22 +40,19 @@ namespace Lykke.Service.BitfinexAdapter.Services.ExecutionHarvester
             return MessageHandler(message);
         }
 
-        public void Start()
+        public Task StartAsync(CancellationToken cancellationToken)
         {
             _socketSubscriber.Subscribe(MessageDispatcher);
             _socketSubscriber.Start();
             _log.WriteInfoAsync(GetType().Name, "Initialization", "Started");
+            return Task.CompletedTask;
         }
 
-        public void Dispose()
-        {
-            Stop();
-        }
-
-        public void Stop()
+        public Task StopAsync(CancellationToken cancellationToken)
         {
             _socketSubscriber.Stop();
             _log.WriteInfoAsync(GetType().Name, "Cleanup", "Stopped");
+            return Task.CompletedTask;
         }
     }
 }

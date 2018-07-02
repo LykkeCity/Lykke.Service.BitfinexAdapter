@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using AzureStorage;
-using AzureStorage.Tables;
-using Common.Log;
 using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
-using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
-using Lykke.SettingsReader;
 
 namespace Lykke.Service.BitfinexAdapter.AzureRepositories
 {

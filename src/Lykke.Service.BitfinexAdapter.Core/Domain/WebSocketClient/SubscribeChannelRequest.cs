@@ -5,8 +5,14 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.WebSocketClient
 {
     public abstract class SubscribeChannelRequest : SubscribeRequest
     {
+        private string _pair;
+
         [JsonProperty("pair")]
-        public string Pair { get; set; }
+        public string Pair
+        {
+            get => _pair;
+            set => _pair = value?.ToUpperInvariant();
+        }
 
         [JsonProperty("channel")]
         [JsonConverter(typeof(StringEnumConverter))]

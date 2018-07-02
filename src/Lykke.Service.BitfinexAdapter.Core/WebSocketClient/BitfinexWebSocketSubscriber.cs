@@ -90,7 +90,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.WebSocketClient
 
         private Task Authenticate(CancellationToken token)
         {
-            var request = AuthintificateRequest.BuildRequest(_apiKey, _apiSecret);
+            var request = AuthenticateRequest.BuildRequest(_apiKey, _apiSecret);
             return Messenger.SendRequestAsync(request, token);
         }
 

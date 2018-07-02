@@ -8,7 +8,6 @@ using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
 using Lykke.Service.BitfinexAdapter.Authentication;
 using Lykke.Service.BitfinexAdapter.Core.Domain.Exceptions;
-using Lykke.Service.BitfinexAdapter.Core.Services;
 using Lykke.Service.BitfinexAdapter.Core.Settings;
 using Lykke.Service.BitfinexAdapter.Models;
 using Lykke.Service.BitfinexAdapter.Models.Validation;
@@ -23,7 +22,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Service.BitfinexAdapter.AzureRepositories;
-using Lykke.Service.BitfinexAdapter.Core.Domain.Settings;
 using Lykke.Service.BitfinexAdapter.Middlewares;
 
 namespace Lykke.Service.BitfinexAdapter
@@ -140,7 +138,7 @@ namespace Lykke.Service.BitfinexAdapter
             {
                 // NOTE: Service not yet recieve and process requests here
 
-                await ApplicationContainer.Resolve<IStartupManager>().StartAsync();
+                // await ApplicationContainer.Resolve<IStartupManager>().StartAsync();
 
                 await Log.WriteMonitorAsync("", $"Env: {Program.EnvInfo}", "Started");
             }
@@ -151,22 +149,23 @@ namespace Lykke.Service.BitfinexAdapter
             }
         }
 
-        private async Task StopApplication()
+        private Task StopApplication()
         {
-            try
-            {
-                // NOTE: Service still can recieve and process requests here, so take care about it if you add logic here.
-
-                await ApplicationContainer.Resolve<IShutdownManager>().StopAsync();
-            }
-            catch (Exception ex)
-            {
-                if (Log != null)
-                {
-                    await Log.WriteFatalErrorAsync(nameof(Startup), nameof(StopApplication), "", ex);
-                }
-                throw;
-            }
+            return Task.CompletedTask;
+//            try
+//            {
+//                // NOTE: Service still can recieve and process requests here, so take care about it if you add logic here.
+//
+//                await ApplicationContainer.Resolve<IShutdownManager>().StopAsync();
+//            }
+//            catch (Exception ex)
+//            {
+//                if (Log != null)
+//                {
+//                    await Log.WriteFatalErrorAsync(nameof(Startup), nameof(StopApplication), "", ex);
+//                }
+//                throw;
+//            }
         }
 
         private async Task CleanUp()
