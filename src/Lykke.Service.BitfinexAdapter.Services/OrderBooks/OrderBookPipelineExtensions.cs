@@ -77,11 +77,16 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooks
 
         public static IObservable<OrderBook> DetectAndFilterAnomalies(
             this IObservable<OrderBook> source,
-            ILog log)
+            ILog log,
+            IEnumerable<string> skipAssets)
         {
+            var assetsToSkip = new HashSet<string>(skipAssets.Select(x => x.ToUpperInvariant()));
+
             return source
                 .GroupBy(x => x.Asset)
-                .SelectMany(x => x.DetectAndFilterAnomaliesAssumingSingleInstrument(log));
+                .SelectMany(group => assetsToSkip.Contains(group.Key.ToUpperInvariant())
+                    ? group
+                    : group.DetectAndFilterAnomaliesAssumingSingleInstrument(log));
         }
 
         public static IObservable<T> NeverIfNotEnabled<T>(this IObservable<T> source, bool enabled)

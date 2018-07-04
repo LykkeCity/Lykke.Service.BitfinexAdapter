@@ -33,5 +33,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Domain.Settings
 
         public IReadOnlyCollection<CurrencySymbol> SupportedCurrencySymbols { get; set; }
 
+        public IReadOnlyCollection<string> AllowedAnomalisticOrderBooksAssets { get; set; }
+
     }
 }
