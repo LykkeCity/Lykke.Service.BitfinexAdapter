@@ -77,6 +77,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooks
                         .Select(messageReader.DeserializeMessage)
                         .Where(x => x != null)
                         .OnlyWithPositiveSpread()
+                        .DetectAndFilterAnomalies(_log)
                         .Share();
 
                 var obPublisher =
