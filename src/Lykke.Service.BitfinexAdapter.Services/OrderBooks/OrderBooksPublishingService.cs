@@ -87,6 +87,8 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooks
                             _settings.RabbitMq.OrderBooks.ConnectionString,
                             _settings.RabbitMq.OrderBooks.Exchange,
                             _log)
+                        .ReportErrors(nameof(ReadAndPublish), _log)
+                        .RetryWithBackoff(TimeSpan.FromSeconds(5), TimeSpan.FromMinutes(10))
                         .Share();
 
                 var tpPublisher =
@@ -98,6 +100,8 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooks
                             _settings.RabbitMq.TickPrices.ConnectionString,
                             _settings.RabbitMq.TickPrices.Exchange,
                             _log)
+                        .ReportErrors(nameof(ReadAndPublish), _log)
+                        .RetryWithBackoff(TimeSpan.FromSeconds(5), TimeSpan.FromMinutes(10))
                         .Share();
 
                 var publishTickPrices = _settings.RabbitMq.TickPrices.Enabled;

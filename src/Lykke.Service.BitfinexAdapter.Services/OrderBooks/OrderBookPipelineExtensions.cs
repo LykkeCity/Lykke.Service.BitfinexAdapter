@@ -17,21 +17,20 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooks
             this IObservable<OrderBook> source,
             ILog log)
         {
-            decimal? MidPrice(IEnumerable<OrderBookItem> orders)
+            decimal? MidPrice(decimal ask, decimal bid)
             {
-                var prices = orders.Select(x => x.Price).ToArray();
-                if (!prices.Any()) return null;
-                return (prices.Min() + prices.Max()) / 2M;
+                if (ask == 0 || bid == 0) return null;
+                return (ask + bid) / 2;
             }
 
-            string DetectAnomaly(decimal? previousMidPrice, decimal? midPrice, string side, string asset)
+            string DetectAnomaly(decimal? previousMidPrice, decimal? midPrice, string asset)
             {
                 if (previousMidPrice == null) return null;
                 if (midPrice == null) return null;
 
                 if (midPrice / previousMidPrice > 10M || previousMidPrice / midPrice > 10M)
                 {
-                    return $"Found anomaly, orderbook {asset} skipped. Current {side} midPrice is " +
+                    return $"Found anomaly, orderbook {asset} skipped. Current midPrice is " +
                            $"{previousMidPrice}, the new one is {midPrice}";
                 }
                 else
@@ -42,33 +41,21 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooks
 
             return Observable.Create<OrderBook>(async (obs, ct) =>
             {
-                decimal? previousBid = null;
-                decimal? previousAsk = null;
+                decimal? previousMid = null;
 
                 await source.ForEachAsync(orderBook =>
                 {
-                    var newAskMidPrice = MidPrice(orderBook.Asks);
-                    var askAnomaly = DetectAnomaly(previousAsk, newAskMidPrice, "ask", orderBook.Asset);
+                    var newMid = MidPrice(orderBook.BestAskPrice, orderBook.BestBidPrice);
+                    var anomaly = DetectAnomaly(previousMid, newMid, orderBook.Asset);
 
-                    var newBidMidPrice = MidPrice(orderBook.Bids);
-                    var bidAnomaly = DetectAnomaly(previousBid, newBidMidPrice, "bid", orderBook.Asset);
-
-                    if (askAnomaly != null)
+                    if (anomaly != null)
                     {
                         log.WriteWarning(
                             nameof(DetectAndFilterAnomalies),
-                            "", askAnomaly);
+                            "", anomaly);
                     }
-                    else if (bidAnomaly != null)
-                    {
-                        log.WriteWarning(
-                            nameof(DetectAndFilterAnomalies),
-                            "", bidAnomaly);
-                    }
-                    else
-                    {
-                        previousAsk = newAskMidPrice ?? previousAsk;
-                        previousBid = newBidMidPrice ?? previousBid;
+                    else {
+                        previousMid = newMid ?? previousMid;
                         obs.OnNext(orderBook);
                     }
                 }, ct);
