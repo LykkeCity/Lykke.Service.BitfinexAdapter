@@ -38,7 +38,7 @@ namespace Lykke.Service.BitfinexAdapter.Models
             return new OrderModel
             {
                 Id = o.ExchangeOrderId.ToString(CultureInfo.InvariantCulture),
-                Symbol = o.Instrument.Name,
+                AssetPair = o.Instrument.Name,
                 Price = o.Price,
                 OriginalVolume = o.OriginalVolume,
                 TradeType = o.tradeType,

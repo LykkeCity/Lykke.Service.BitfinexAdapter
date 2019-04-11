@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Service.BitfinexAdapter.AzureRepositories;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 {

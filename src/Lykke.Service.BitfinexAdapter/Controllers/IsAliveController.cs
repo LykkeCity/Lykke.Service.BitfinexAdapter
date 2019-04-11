@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Linq;
 using System.Net;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers
 {
