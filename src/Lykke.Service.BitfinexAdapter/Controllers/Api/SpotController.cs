@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using Lykke.Common.ExchangeAdapter.SpotController.Records;
 using Lykke.Service.BitfinexAdapter.AzureRepositories;
 using Lykke.Service.BitfinexAdapter.Core.Domain.RestClient;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Lykke.Service.BitfinexAdapter.Controllers.Api
 {
