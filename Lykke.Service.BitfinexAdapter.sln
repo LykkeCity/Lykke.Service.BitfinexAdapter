@@ -15,10 +15,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.BitfinexAdapt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.BitfinexAdapter.Services", "src\Lykke.Service.BitfinexAdapter.Services\Lykke.Service.BitfinexAdapter.Services.csproj", "{2D5F52EC-2A27-4045-81ED-72355E2A6325}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution items", "{6CA74DE0-A357-4934-9D8B-FEA3F0A2D690}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0. Solution items", "0. Solution items", "{6CA74DE0-A357-4934-9D8B-FEA3F0A2D690}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		README.md = README.md
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		LICENSE = LICENSE
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3. Client", "3. Client", "{C9A2CFDE-EA32-4946-B679-7CE6EFA816B8}"
@@ -28,6 +31,13 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.BitfinexAdapter.Tests", "tests\Lykke.Service.BitfinexAdapter.Tests\Lykke.Service.BitfinexAdapter.Tests.csproj", "{A61FFDEE-5725-4650-A788-6E55EE5EFD5B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4. Tests", "4. Tests", "{8F9036B1-5106-4C69-B2D2-B78EE52687A0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{760AF681-8B95-468B-883C-13F38F8825C9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{DB976FDC-0347-4C2C-87C1-A2497E83C147}"
+ProjectSection(SolutionItems) = preProject
+	.github\workflows\dotnetcore.yml = .github\workflows\dotnetcore.yml
+EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,5 +79,6 @@ Global
 		{2D5F52EC-2A27-4045-81ED-72355E2A6325} = {CC2067D7-1971-47BB-B491-5649EA3C18B2}
 		{3C300C31-97D3-41E8-A627-C53491BDA28B} = {C9A2CFDE-EA32-4946-B679-7CE6EFA816B8}
 		{A61FFDEE-5725-4650-A788-6E55EE5EFD5B} = {8F9036B1-5106-4C69-B2D2-B78EE52687A0}
+		{DB976FDC-0347-4C2C-87C1-A2497E83C147} = {760AF681-8B95-468B-883C-13F38F8825C9}
 	EndGlobalSection
 EndGlobal

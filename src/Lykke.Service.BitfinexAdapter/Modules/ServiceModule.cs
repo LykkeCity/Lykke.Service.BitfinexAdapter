@@ -54,7 +54,7 @@ namespace Lykke.Service.BitfinexAdapter.Modules
 
             builder.RegisterType<BitfinexExchange>().As<ExchangeBase>().SingleInstance();
 
-            RegisterRabbitMqHandler<ExecutionReport>(builder, _settings.CurrentValue.BitfinexAdapterService.RabbitMq.Trades);
+            //RegisterRabbitMqHandler<ExecutionReport>(builder, _settings.CurrentValue.BitfinexAdapterService.RabbitMq.Trades);
 
             builder.RegisterType<OrderBooksPublishingService>()
                 .As<IHostedService>()
