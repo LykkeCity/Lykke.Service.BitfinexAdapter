@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Common.ExchangeAdapter;
 using Lykke.Common.ExchangeAdapter.Contracts;
 using Lykke.RabbitMqBroker.Publisher;
 using Lykke.RabbitMqBroker.Subscriber;
+using Lykke.Service.BitfinexAdapter.Core.Utils;
 
 namespace Lykke.Service.BitfinexAdapter.Services.OrderBooks
 {
@@ -133,6 +135,42 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooks
             {
                 await connection.ProduceAsync(x);
                 return Unit.Default;
+            });
+        }
+
+        public static IObservable<Unit> PublishMetrics(this IObservable<OrderBook> source)
+        {
+            return source.SelectMany(x =>
+            {
+                InternalMetrics.OrderBookOutCount
+                    .WithLabels(x.Asset)
+                    .Inc();
+
+                InternalMetrics.OrderBookOutDelayMilliseconds
+                    .WithLabels(x.Asset)
+                    .Set((DateTime.UtcNow - x.Timestamp).TotalMilliseconds);
+
+                return Task.FromResult(Unit.Default);
+            });
+        }
+
+        public static IObservable<Unit> PublishMetrics(this IObservable<TickPrice> source)
+        {
+            return source.SelectMany(x =>
+            {
+                InternalMetrics.QuoteOutCount
+                    .WithLabels(x.Asset)
+                    .Inc();
+
+                InternalMetrics.QuoteOutSidePrice
+                    .WithLabels(x.Asset, "ask")
+                    .Set((double) x.Ask);
+
+                InternalMetrics.QuoteOutSidePrice
+                    .WithLabels(x.Asset, "bid")
+                    .Set((double) x.Bid);
+
+                return Task.FromResult(Unit.Default);
             });
         }
 
