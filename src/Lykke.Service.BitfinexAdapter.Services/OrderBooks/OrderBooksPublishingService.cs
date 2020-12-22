@@ -83,6 +83,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooks
                 var obPublisher =
                     orderBooks
                         .ThrottleEachInstrument(x => x.Asset, _settings.MaxEventPerSecondByInstrument)
+                        .PublishMetrics()
                         .PublishToRmq(
                             _settings.RabbitMq.OrderBooks.ConnectionString,
                             _settings.RabbitMq.OrderBooks.Exchange,
@@ -96,6 +97,7 @@ namespace Lykke.Service.BitfinexAdapter.Services.OrderBooks
                         .Select(TickPrice.FromOrderBook)
                         .DistinctEveryInstrument(x => x.Asset)
                         .ThrottleEachInstrument(x => x.Asset, _settings.MaxEventPerSecondByInstrument)
+                        .PublishMetrics()
                         .PublishToRmq(
                             _settings.RabbitMq.TickPrices.ConnectionString,
                             _settings.RabbitMq.TickPrices.Exchange,

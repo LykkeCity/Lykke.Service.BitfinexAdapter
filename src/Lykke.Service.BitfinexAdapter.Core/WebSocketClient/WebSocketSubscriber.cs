@@ -4,6 +4,7 @@ using System;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
+using Lykke.Service.BitfinexAdapter.Core.Utils;
 
 namespace Lykke.Service.BitfinexAdapter.Core.WebSocketClient
 {
@@ -121,6 +122,10 @@ namespace Lykke.Service.BitfinexAdapter.Core.WebSocketClient
                     RechargeHeartbeat();
                     await HandleResponse(response, CancellationToken);
                 }
+            }
+            catch (Exception)
+            {
+                InternalMetrics.ConnectionErrorsCount.Inc();
             }
             finally
             {

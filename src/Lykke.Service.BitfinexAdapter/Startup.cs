@@ -23,6 +23,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Service.BitfinexAdapter.AzureRepositories;
 using Lykke.Service.BitfinexAdapter.Middlewares;
+using Prometheus;
 
 namespace Lykke.Service.BitfinexAdapter
 {
@@ -124,6 +125,8 @@ namespace Lykke.Service.BitfinexAdapter
                 appLifetime.ApplicationStarted.Register(() => StartApplication().GetAwaiter().GetResult());
                 appLifetime.ApplicationStopping.Register(() => StopApplication().GetAwaiter().GetResult());
                 appLifetime.ApplicationStopped.Register(() => CleanUp().GetAwaiter().GetResult());
+
+                app.UseMetricServer();
             }
             catch (Exception ex)
             {
