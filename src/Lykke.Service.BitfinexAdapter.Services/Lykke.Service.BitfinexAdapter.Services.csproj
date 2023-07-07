@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <AssemblyName>Lykke.Service.BitfinexAdapter.Services</AssemblyName>
@@ -14,7 +14,7 @@
   <ItemGroup>
     <PackageReference Include="Lykke.Common" Version="7.4.0" />
     <PackageReference Include="Lykke.Common.ExchangeAdapter" Version="3.0.0" />
-    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.11" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.24" />
     <PackageReference Include="Polly" Version="6.1.0" />
   </ItemGroup>
   <ItemGroup>
