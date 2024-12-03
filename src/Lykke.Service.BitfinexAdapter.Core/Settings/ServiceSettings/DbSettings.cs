@@ -7,7 +7,7 @@ namespace Lykke.Service.BitfinexAdapter.Core.Settings.ServiceSettings
         [AzureTableCheck]
         public string LogsConnString { get; set; }
 
-        [AzureTableCheck]
-        public string SnapshotConnectionString { get; set; }
+        // [AzureTableCheck]
+        // public string SnapshotConnectionString { get; set; }
     }
 }

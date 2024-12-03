@@ -70,14 +70,14 @@ namespace Lykke.Service.BitfinexAdapter
                 ApiKeyAuthAttribute.ClientApiKeys = appSettings.CurrentValue.BitfinexAdapterService.Credentials
                     .ToDictionary(x => x.InternalApiKey);
 
-                builder.RegisterInstance(
-                        new LimitOrderRepository(AzureTableStorage<LimitOrderEntity>.Create(
-                            appSettings.ConnectionString(x => x.BitfinexAdapterService.Db.SnapshotConnectionString),
-                            "BitfinexLimitOrders",
-                            Log)))
-                    .SingleInstance()
-                    .As<ILimitOrderRepository>()
-                    .AsSelf();
+                // builder.RegisterInstance(
+                //         new LimitOrderRepository(AzureTableStorage<LimitOrderEntity>.Create(
+                //             appSettings.ConnectionString(x => x.BitfinexAdapterService.Db.SnapshotConnectionString),
+                //             "BitfinexLimitOrders",
+                //             Log)))
+                //     .SingleInstance()
+                //     .As<ILimitOrderRepository>()
+                //     .AsSelf();
 
                 builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x), Log));
                 builder.Populate(services);
